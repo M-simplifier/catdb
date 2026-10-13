@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Relay Desk · CatDB</title><link rel="stylesheet" href="/style.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Relay Desk home"><span class="brand-mark">↗</span><span>Relay Desk<small>POWERED BY CATDB</small></span></a>
+    <div class="nav-label">YOUR WORKSPACE</div>
+    <nav aria-label="Workspace"><button class="nav active" data-page="queue"><span>▤</span> Assignment queue</button><button class="nav" data-page="people"><span>♧</span> People & sources</button><button class="nav" data-page="handoff"><span>↗</span> Public handoff</button></nav>
+    <div class="sidebar-note"><span class="local-dot"></span> Local by design<p>Your data stays in one file on this computer. No account. No cloud sync.</p><span class="poc">PROOF OF CONCEPT</span></div>
+    <button class="nav model-link" data-page="model"><span>∘</span> See the mathematics</button>
+    <a class="source-link" href="https://github.com/M-simplifier/catdb" target="_blank" rel="noreferrer">Source & documentation ↗</a>
+  </aside>
+  <div class="shell">
+    <header class="topbar"><div class="file-pill"><span class="local-dot"></span><span id="database">Connecting…</span></div><div><span id="save-state" role="status">Opening database</span><button id="backup" class="button quiet" title="A full native backup, including all private roster data">↓ Full backup</button></div></header>
+    <main id="main" tabindex="-1"><div class="loading">Opening your local workspace…</div></main>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </div>
+  <dialog id="dialog"><div class="dialog-head"><h2 id="dialog-title"></h2><button id="close-dialog" class="icon-button" aria-label="Close dialog">×</button></div><div id="dialog-body"></div><div id="dialog-error" class="error" role="alert" hidden></div></dialog>
+</body></html>

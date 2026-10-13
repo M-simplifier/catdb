@@ -1,0 +1,105 @@
+{
+  "source": {
+    "objects": [
+      "Card",
+      "Text"
+    ],
+    "arrows": [
+      {
+        "arrow": "caption",
+        "source": "Card",
+        "target": "Text"
+      },
+      {
+        "arrow": "assignee",
+        "source": "Card",
+        "target": "Text"
+      }
+    ],
+    "equations": []
+  },
+  "target": {
+    "arrows": [
+      {
+        "arrow": "project",
+        "source": "Task",
+        "target": "Project"
+      },
+      {
+        "arrow": "owner",
+        "source": "Task",
+        "target": "Person"
+      },
+      {
+        "arrow": "personProject",
+        "source": "Person",
+        "target": "Project"
+      },
+      {
+        "arrow": "title",
+        "source": "Task",
+        "target": "Text"
+      },
+      {
+        "arrow": "status",
+        "source": "Task",
+        "target": "State"
+      },
+      {
+        "arrow": "projectName",
+        "source": "Project",
+        "target": "Text"
+      },
+      {
+        "arrow": "personName",
+        "source": "Person",
+        "target": "Text"
+      }
+    ],
+    "equations": [
+      {
+        "left": {
+          "start": "Task",
+          "steps": [
+            "project"
+          ]
+        },
+        "right": {
+          "start": "Task",
+          "steps": [
+            "owner",
+            "personProject"
+          ]
+        }
+      }
+    ],
+    "objects": [
+      "Task",
+      "Person",
+      "Project",
+      "Text",
+      "State"
+    ]
+  },
+  "mapping": {
+    "onObjects": {
+      "Card": "Task",
+      "Text": "Text"
+    },
+    "onArrows": {
+      "assignee": {
+        "steps": [
+          "owner",
+          "personName"
+        ],
+        "start": "Task"
+      },
+      "caption": {
+        "steps": [
+          "title"
+        ],
+        "start": "Task"
+      }
+    }
+  }
+}

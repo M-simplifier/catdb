@@ -1,0 +1,69 @@
+cabal-version: 3.0
+name: catdb
+version: 0.2.0.0
+synopsis: A small persistent database of finite functors
+build-type: Simple
+license: MIT
+license-file: LICENSE
+author: M-simplifier and contributors
+maintainer: https://github.com/M-simplifier/catdb/issues
+homepage: https://m-simplifier.github.io/catdb/
+bug-reports: https://github.com/M-simplifier/catdb/issues
+category: Database
+tested-with: GHC ==9.6.7
+description: A proof of concept embedded database with exact finite categorical
+  schemas, functorial data migration, native file persistence, and Relay Desk,
+  a practical local roster reconciliation and assignment application.
+extra-source-files: README.md, CONTRIBUTING.md, STATUS.md, docs/*.md,
+  reference/web/*, samples/*.csv, examples/*.json, test/*.py, test/*.ps1,
+  build.ps1, site/*.html, site/*.css, site/*.js, site/*.svg, site/assets/*.jpg
+
+source-repository head
+  type: git
+  location: https://github.com/M-simplifier/catdb.git
+
+common settings
+  default-language: Haskell2010
+  ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns
+  default-extensions: OverloadedStrings DeriveGeneric DerivingStrategies GeneralizedNewtypeDeriving
+  build-depends: base >=4.16 && <5, containers, text, bytestring, binary, aeson >=2, mtl
+
+library
+  import: settings
+  hs-source-dirs: src
+  exposed-modules: CatDB, CatDB.Schema, CatDB.Instance, CatDB.Migration, CatDB.Store
+  other-modules: CatDB.Internal
+  c-sources: cbits/file.c
+  include-dirs: cbits
+
+executable catdb
+  import: settings
+  hs-source-dirs: app
+  main-is: Main.hs
+  other-modules: Demo
+  build-depends: catdb, directory, filepath
+  ghc-options: -threaded -rtsopts
+
+executable relay-desk
+  import: settings
+  hs-source-dirs: reference/src
+  main-is: Main.hs
+  other-modules: Relay.Model
+  -- 3.4.13's STM receive wait hangs on our GHC 9.6 Windows runtime.
+  build-depends: catdb, directory, filepath, wai >=3.2 && <3.3, warp ==3.4.12, http-types >=0.12 && <0.13
+  ghc-options: -threaded -rtsopts
+
+executable embedded-example
+  import: settings
+  hs-source-dirs: examples
+  main-is: Embedded.hs
+  build-depends: catdb
+
+test-suite laws
+  import: settings
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test, app, reference/src
+  main-is: Main.hs
+  other-modules: Demo, Relay.Model
+  build-depends: catdb, directory, filepath, process, QuickCheck >=2.14
+  ghc-options: -threaded -rtsopts

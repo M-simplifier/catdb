@@ -1,0 +1,50 @@
+{
+  "schema": {
+    "objects": [
+      "Person",
+      "Department",
+      "Ticket"
+    ],
+    "arrows": [
+      {
+        "target": "Department",
+        "source": "Person",
+        "arrow": "personDept"
+      },
+      {
+        "target": "Department",
+        "source": "Ticket",
+        "arrow": "ticketDept"
+      }
+    ],
+    "equations": []
+  },
+  "instance": {
+    "sets": {
+      "Person": [
+        "alice",
+        "bob"
+      ],
+      "Department": [
+        "engineering",
+        "design"
+      ],
+      "Ticket": [
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "functions": {
+      "personDept": {
+        "alice": "engineering",
+        "bob": "design"
+      },
+      "ticketDept": {
+        "T2": "engineering",
+        "T3": "design",
+        "T1": "engineering"
+      }
+    }
+  }
+}

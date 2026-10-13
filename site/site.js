@@ -1,0 +1,8 @@
+'use strict';
+const operations={
+sigma:['LEFT KAN EXTENSION','Identify what the relations connect.','Σ builds a quotient of transported elements. In Relay Desk, equal emails and explicit links generate identity classes. Original records remain traceable.','(Σ_F I)(d) = colim_(F ↓ d) I','sigmaOrigins · sigmaUnit · sigmaFactor'],
+pi:['RIGHT KAN EXTENSION','Keep the choices that agree.','Π constructs compatible families: one value at each position, satisfying every arrow. Relay Desk takes the limit of Member → Person and Member → Team ← Ticket to find eligible assignees.','(Π_F I)(d) = lim_(d ↓ F) I','piFamilies · piCounit · piFactor'],
+delta:['PRECOMPOSITION','Read data through another schema.','Δ follows paths declared by a schema map. The public schema reads an assigned name through Assignment.assignee.name. Root selection and generated closure then exclude unrelated values.','Δ_F J = J ∘ F','delta · deltaNatural · composeMapping']};
+const tabs=[...document.querySelectorAll('[data-operation]')],panel=document.querySelector('#operation-panel');
+function show(tab){tabs.forEach(t=>{t.setAttribute('aria-selected',String(t===tab));t.tabIndex=t===tab?0:-1});panel.setAttribute('aria-labelledby',tab.id);['label','title','body','formula','api'].forEach((key,n)=>document.querySelector('#op-'+key).textContent=operations[tab.dataset.operation][n])}
+tabs.forEach((tab,n)=>{tab.addEventListener('click',()=>show(tab));tab.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const index=e.key==='Home'?0:e.key==='End'?tabs.length-1:(n+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[index].focus();show(tabs[index])})});

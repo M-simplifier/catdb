@@ -1,0 +1,11 @@
+* text=auto
+*.hs text eol=lf
+*.c text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.yml text eol=lf
+*.py text eol=lf
+*.cmd text eol=crlf
+*.jpg binary

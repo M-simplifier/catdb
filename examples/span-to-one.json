@@ -1,0 +1,46 @@
+{
+  "source": {
+    "objects": [
+      "Person",
+      "Department",
+      "Ticket"
+    ],
+    "arrows": [
+      {
+        "target": "Department",
+        "source": "Person",
+        "arrow": "personDept"
+      },
+      {
+        "target": "Department",
+        "source": "Ticket",
+        "arrow": "ticketDept"
+      }
+    ],
+    "equations": []
+  },
+  "target": {
+    "arrows": [],
+    "objects": [
+      "Result"
+    ],
+    "equations": []
+  },
+  "mapping": {
+    "onArrows": {
+      "personDept": {
+        "steps": [],
+        "start": "Result"
+      },
+      "ticketDept": {
+        "steps": [],
+        "start": "Result"
+      }
+    },
+    "onObjects": {
+      "Person": "Result",
+      "Department": "Result",
+      "Ticket": "Result"
+    }
+  }
+}

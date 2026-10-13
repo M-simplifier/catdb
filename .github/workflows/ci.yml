@@ -1,0 +1,50 @@
+name: Build and publish
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: catdb-main
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.6.7'
+          cabal-version: '3.12.1.0'
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: linux-ghc967-${{ hashFiles('catdb.cabal', 'cabal.project') }}
+          restore-keys: linux-ghc967-
+      - run: cabal update
+      - run: cabal build all
+      - run: cabal test laws --test-show-details=direct --test-options="${{ runner.temp }}/catdb-laws"
+      - name: Actual HTTP workflow
+        run: python3 test/http_smoke.py "$(cabal list-bin relay-desk)" reference/web
+      - name: JavaScript syntax
+        run: |
+          node --check reference/web/app.js
+          node --check site/site.js
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+  pages:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5
