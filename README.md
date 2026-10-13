@@ -9,7 +9,7 @@ Your data live in one native `.catdb` file. No database service or SQLite depend
 **Working proof of concept · MIT · contributions through issues only**
 
 [Website](https://m-simplifier.github.io/catdb/) ·
-[Download](https://github.com/M-simplifier/catdb/releases/latest) ·
+[Download](https://github.com/M-simplifier/catdb/releases/tag/v0.2.0-poc) ·
 [日本語](docs/guide.ja.md) · [Limits](STATUS.md) · [Mathematics](docs/mathematics.md)
 
 ## Start with a real application

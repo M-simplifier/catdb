@@ -239,4 +239,11 @@ copyDatabase db path = do
 
 -- A compact, consistent native-file backup without creating a sidecar file.
 backupBytes :: Database -> IO (Either StoreError B.ByteString)
-backupBytes db = fmap (\i -> frame (Snapshot (definition (instanceSchema i)) (instanceData i))) <$> snapshot db
+backupBytes db = do
+  result <- snapshot db
+  pure $ do
+    i <- result
+    let bytes = frame (Snapshot (definition (instanceSchema i)) (instanceData i))
+    if B.length bytes > maxPayload + 40
+      then Left (FileError "compact backup exceeds the 256 MiB frame limit")
+      else Right bytes
