@@ -1,5 +1,7 @@
 # CatDBを、実際の仕事で試す
 
+[日本語公式サイト](https://m-simplifier.github.io/catdb/ja/) · [ダウンロード](https://github.com/M-simplifier/catdb/releases/tag/v0.2.0-poc)
+
 CatDBは圏論のデータモデルをHaskellで実装した、1ファイルのローカルDBです。
 同梱のRelay Deskで、複数のCSV名簿をまとめ、依頼を担当者に割り当て、共有用一覧を作れます。
 ブラウザーは画面を担当し、計算と保存はHaskellが実行します。

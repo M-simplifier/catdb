@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CatDB — データをつなぐ仕事を、DBに持たせよう。</title>
+<meta name="description" content="名寄せした結果を、担当候補の検索にも、共有用の出力にも。関係を保つ演算を備えたHaskell製の1ファイルDB。実アプリRelay Deskを同梱。MIT・実動PoC。">
+<meta name="theme-color" content="#111510">
+<link rel="canonical" href="https://m-simplifier.github.io/catdb/ja/">
+<link rel="alternate" hreflang="en" href="https://m-simplifier.github.io/catdb/">
+<link rel="alternate" hreflang="ja" href="https://m-simplifier.github.io/catdb/ja/">
+<link rel="alternate" hreflang="x-default" href="https://m-simplifier.github.io/catdb/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CatDB">
+<meta property="og:title" content="CatDB — データをつなぐ仕事を、DBに持たせよう。">
+<meta property="og:description" content="名寄せした結果を、担当候補の検索にも、共有用の出力にも。関係を保つ演算を備えたHaskell製の1ファイルDB。実アプリRelay Deskを同梱。MIT・実動PoC。">
+<meta property="og:url" content="https://m-simplifier.github.io/catdb/ja/">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:image" content="https://m-simplifier.github.io/catdb/assets/relay-desk.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+<script src="../site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="wrap top"><a class="wordmark" href="#main" aria-label="CatDB ホーム"><svg viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M28 8H11L4 18L11 28H28M11 8L23 18L11 28" stroke="#dbf278" stroke-width="2.2" stroke-linejoin="round"/><circle cx="28" cy="8" r="3" fill="#dbf278"/><circle cx="23" cy="18" r="3" fill="#dbf278"/><circle cx="28" cy="28" r="3" fill="#dbf278"/></svg>CatDB<span>v0.2 PoC</span></a><nav class="nav" aria-label="メインナビゲーション"><a href="#why">選ぶ理由</a><a href="#app">実アプリ</a><a class="nav-cta" href="#start">使い始める ↗</a><span class="languages" aria-label="表示言語"><a href="../" lang="en" hreflang="en">EN</a><a href="./" lang="ja" hreflang="ja" aria-current="page">日本語</a></span></nav></header>
+<main id="main">
+<section class="hero wrap">
+  <div class="hero-grid">
+    <div><p class="eyebrow">つながりを、アプリの力に。</p><p class="product-type">圏論から生まれた、Haskell製の組込みDB</p><h1>データをつなぐ<br>仕事を、<br><em>DBに持たせよう。</em></h1><p class="lead">名寄せした結果を、候補の検索にも、その先の出力にも。CatDBは、<strong style="color:#e2eccf">統合・検索・変換を関係の定義から組み立てる</strong>、新しい組込みDBです。</p><div class="ctas"><a class="button" href="#start">実アプリで試す <span aria-hidden="true">↗</span></a><a class="button ghost" href="https://github.com/M-simplifier/catdb">コードを見る <span aria-hidden="true">→</span></a></div><div class="hero-proof"><span>ローカル1ファイル</span><span>サーバー不要</span><span>MIT · 実動PoC</span></div></div>
+    <div class="demo" id="merge-demo">
+      <div class="demo-top"><span><i class="dot"></i>RELAY DESK / 名簿をひとつに</span><span class="mono">01 → 02</span></div>
+      <div class="demo-stage"><div class="source-heading"><span>メールの違う、この2件。</span><span>原本を残して、結ぶ。</span></div><div class="pair"><div class="source-person"><small>社員名簿</small><strong>Jon Bell</strong><code>jon@example.test</code></div><span class="link-sign" aria-hidden="true">⋯</span><div class="source-person"><small>委託先名簿</small><strong>Jon B.</strong><code>j.bell@example.test</code></div></div><button type="button" class="demo-trigger" id="merge-button" aria-pressed="false">この2件を、同じ人に。　↓</button><p class="demo-explain" id="merge-explain" aria-live="polite">同じ人と確認できたら、リンクを追加。<br>下の担当候補も一緒に変わります。</p><div class="flow-arrow">まとめた人物を、そのまま担当候補へ</div><div class="candidate"><div class="candidate-head"><span>同期不具合の調査 · Engineering</span><span class="candidate-count" id="candidate-count">候補 2人</span></div><div class="candidate-people" id="hero-candidates"><span class="person-pill"><i class="avatar">JB</i>Jon Bell</span><span class="person-pill"><i class="avatar">JB</i>Jon B.</span></div></div><div class="demo-metrics" aria-live="polite"><div><span class="metric">6</span><small>名簿の原本</small></div><div><span class="metric" id="hero-people">5</span><small>同一人物をまとめた人数</small></div><div><span class="metric" id="hero-pairs">7</span><small>全依頼の候補の組数</small></div></div></div>
+      <div class="demo-bottom">配布版Haskellアプリで記録した結果の切替。ブラウザー内のDB実行ではありません。架空の名簿を使用しています。</div>
+    </div>
+  </div><noscript><p class="noscript">操作例にはJavaScriptが必要です。同一人物リンクを加えると、原本6件を保ったまま人数は5→4、全依頼の候補の組数は7→6になります。</p></noscript><div class="scroll-hint">つないだ先で、何が変わるか。 <span aria-hidden="true">↓</span></div>
+</section>
+
+<section class="pain" id="why"><div class="wrap pain-grid reveal"><div><p class="eyebrow">画面をまたいで、同じ関係を使う</p><h2>名寄せは直った。<br>でも、候補には二人いる。</h2><p>同一人物としてまとめる処理。担当できる人を探す処理。外部向けに出力する処理。それぞれのコードが同じ関係を別々に解釈すると、一か所を直しても、別の画面には古い判断が残ります。</p><p class="accent">CatDBでは、まとめた人物を担当候補の検索へ、その結果を共有用の出力へ渡します。<br>関係を受け渡す仕組みを、DBの演算で組み立てられます。</p></div><div class="bug-lines"><div class="bug-line"><span class="index">01</span><div><strong>この2件は、同じ人。</strong><small>宣言した関係でまとめ、元の記録との対応を残す。</small></div><span class="sign">Σ</span></div><div class="bug-line"><span class="index">02</span><div><strong>この人は、この依頼を担当できる。</strong><small>参照関係が一致する組を集める。</small></div><span class="sign">Π</span></div><div class="bug-line"><span class="index">03</span><div><strong>共有先には、この形で渡す。</strong><small>内部の道を読み、必要な記録に絞る。</small></div><span class="sign">Δ</span></div><p class="small">同一人物とみなす方針や、何を共有するかはアプリが決める。関係を保って計算する部分を、DBが引き受けます。</p></div></div></section>
+
+<section class="section app-section" id="app"><div class="wrap reveal"><div class="app-heading"><div><p class="eyebrow">まずは、動くアプリで。</p><h2>名簿を取り込んだら、<br>仕事を割り振れる。</h2></div><p>同梱のRelay Deskは、CSV名簿と依頼を扱うローカルアプリです。表記の違う人をまとめ、チームに合う担当を選び、共有用の一覧まで作れます。</p></div><div class="app-frame"><div class="app-frame-head"><span><i class="dot"></i>RELAY DESK / 実際の画面</span><span class="filepath">desk.catdb</span></div><a class="app-zoom" href="../assets/relay-desk.jpg" target="_blank" rel="noopener" aria-label="実際の画面を拡大する"><img class="app-image" src="../assets/relay-desk.jpg" alt="Relay Deskの実際の画面。取り込んだ名簿、同一人物のまとまり、依頼の担当候補、共有用一覧を扱うローカルアプリ。" width="1264" height="1076" loading="lazy"></a><div class="app-footer"><span>Haskellが計算・保存し、ブラウザーが画面を表示。</span><span>実アプリの別セッション：名簿7件を取り込んだ状態。</span></div></div><div class="capabilities"><div><strong>CSVを取り込む</strong><small>列の対応づけ・再取込・一括検査</small></div><div><strong>担当を決める</strong><small>依頼の編集・候補・完了と再開</small></div><div><strong>共有する範囲を選ぶ</strong><small>未完了の依頼と担当名を出力</small></div><div><strong>1ファイルで持つ</strong><small>保存・開き直し・バックアップ</small></div></div><p class="dark-note">原本の名前やメールを残して統合し、必要な担当名だけを公開用データに含めます。公開用の出力はΔと到達可能な要素の絞り込みで作ります。題名などの内容は、共有前に確認してください。</p></div></section>
+
+<section class="section light"><div class="wrap">
+  <div class="split reveal"><div><div class="section-label"><b>01</b> ルールをスキーマに書く</div><h2>そのルールを、<br>すべての書き込みに。</h2><p class="body-copy">「担当者は、依頼と同じチーム」。<br>画面で一度チェックしても、CSVの再取込や別の呼出元から崩れたら困ります。</p><p class="body-copy">CatDBでは、<strong>二つの道の到着点を一致させる</strong>という式をスキーマに書きます。DBが変更のまとまりを検査し、矛盾した更新を拒否します。</p><p class="clause">同じ条件はSQLの複合外部キーなどでも表せます。CatDBでは、参照をたどる「道の一致」を直接書けます。</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/1c18cc2024c2e01ecb96471be2b8dc624b22c2be/reference/src/Relay/Model.hs#L80">実際のスキーマを読む →</a></div><div class="rule-box" id="rule-box"><div class="rule-head">スキーマの約束 / 同じチームに着くこと</div><div class="rule-visual"><div class="route"><span class="cell">担当登録</span>→<span class="cell">依頼</span>→<span class="end">Design</span></div><div class="equals" id="rule-equals">＝</div><div class="route second"><span class="cell">担当登録</span>→<span class="cell" id="rule-person">Maya</span>→<span class="end" id="rule-team">Design</span></div><div class="rule-feedback" aria-live="polite"><span class="status-dot"></span><span id="rule-status">登録できる。二つの道が一致する。</span></div><code class="rule-snippet">Equation
+  (Path "Assignment" ["ticket", "ticketTeam"])
+  (Path "Assignment" ["assignee", "rosterTeam"])</code></div><button type="button" class="rule-button" id="rule-button" aria-pressed="false"><span>別チームのJonを登録すると？</span><span aria-hidden="true">↗</span></button></div></div>
+  <div class="divider"></div>
+  <div class="split reveal"><div class="mapping-block"><div class="mapping-head"><span>スキーマ間の対応</span><span>データが空でも検査</span></div><div class="mapping-body"><div class="mapping-step"><strong>項目を対応づける</strong><small>項目</small></div><div class="mapping-step"><strong>矢印を、相手側の道に写す</strong><small>参照経路</small></div><div class="mapping-step"><strong>「同じ道」という約束を保つ</strong><small>守るべき等式</small></div><div class="mapping-seal">mapping :: … → Either Error Mapping</div><p class="mapping-desc">写した先で約束が成り立たない対応は、ここで拒否。<br>今日のデータが偶然合っているだけでは通りません。</p></div></div><div><div class="section-label"><b>02</b> データを移す前に、対応を検査する</div><h2>変換そのものが、<br>レビューできる。</h2><p class="body-copy">別形式に移すとき、本当に保ちたいのは列名だけでしょうか。「依頼のチームと、担当者のチームは同じ」という約束も、持っていきたい。</p><p class="body-copy">CatDBの写像は、項目と道、そして<strong>経路の等式を保つこと</strong>まで検査します。変換を名前の対応表から、検査して組み合わせられる部品にします。</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/1c18cc2024c2e01ecb96471be2b8dc624b22c2be/test/Main.hs#L91">同じ図でも、等式を失う対応を拒否するテスト →</a></div></div>
+</div></section>
+
+<section class="section api-area" id="model"><div class="wrap reveal"><div class="api-top"><div><p class="eyebrow">圏論の美しさを、使える演算に。</p><h2>統合。検索。変換。<br>共通の演算で、次につなぐ。</h2></div><p>結果を、関係を備えたデータとして受け取る。元の要素との対応も使う。圏論を基礎に選んだ理由が、ここにあります。</p></div><div class="operations"><div class="op"><span class="op-symbol">Σ</span><div><h3>まとめる</h3><small>SIGMA / ORIGINS INCLUDED</small></div><div><p>指定した関係によって同一視する。できあがった各要素から、どの元データをまとめたかをたどれます。</p><code>resolved &lt;- sigma identityMap roster</code></div></div><div class="op"><span class="op-symbol">Π</span><div><h3>条件をそろえる</h3><small>PI / COMPATIBLE FAMILIES</small></div><div><p>矢印をたどって矛盾しない組を集める。候補がどの人物・所属・依頼からできたかも返します。</p><code>candidates &lt;- piMigration eligibilityMap memberships</code></div></div><div class="op"><span class="op-symbol">Δ</span><div><h3>別の形で読む</h3><small>DELTA / PATHS AS A VIEW</small></div><div><p>公開側の項目を、内部の参照経路に対応づける。必要な要素に絞る操作と組み合わせて出力を作れます。</p><code>public &lt;- delta publicMapping workspace<br>handoff &lt;- generated visibleRoots public</code></div></div></div><p class="math-note">上記はAPIの抜粋です。用途ごとのスキーマ・写像・データの準備が必要です。理論上の基礎は <span class="mono">Σ ⊣ Δ ⊣ Π</span>。CatDBは由来・整合する組・普遍写像まで実装しています。<a href="https://github.com/M-simplifier/catdb/blob/1c18cc2024c2e01ecb96471be2b8dc624b22c2be/docs/mathematics.md">数理と実装を読む →</a></p></div></section>
+
+
+
+<section class="get-started" id="start"><div class="wrap start-grid reveal"><div><p class="eyebrow">ダウンロードして、そのまま試す</p><h2>最初の実験は、<br>ひとつのファイルから。</h2><p>Windows版を展開し、Start Relay Desk.cmdをダブルクリック。デモのJonの2件を結んでみてください。担当候補が変わり、開き直しても変更が残ります。</p><a class="button" href="https://github.com/M-simplifier/catdb/releases/download/v0.2.0-poc/catdb-0.2.0-poc-windows.zip">Windows版をダウンロード <span aria-hidden="true">↗</span></a><div class="start-links"><a href="https://github.com/M-simplifier/catdb/blob/main/docs/guide.ja.md">日本語ガイド</a><a href="https://github.com/M-simplifier/catdb/blob/main/examples/Embedded.hs">Haskellへの組込み例</a><a href="https://github.com/M-simplifier/catdb#build">ソースからビルド</a></div></div><div><div class="terminal"><div class="terminal-top"><span>PowerShell / コマンドで起動するなら</span><button type="button" class="copy" id="copy-command">コピー</button></div><pre><span class="prompt">&gt; </span><span id="command">.\relay-desk.exe desk.catdb --demo</span>
+
+Relay Desk / CatDB PoC
+Open http://127.0.0.1:4283
+
+<span class="prompt"># データは desk.catdb に保存。</span>
+<span class="prompt"># 同じファイルを開けば、続きから。</span></pre></div><p class="small" style="margin:13px 0 0">同梱の <span class="mono">Start Relay Desk.cmd</span> でも起動できます。<br>自分のデータを空の状態から始める場合は <span class="mono">--demo</span> を外します。</p></div></div></section>
+
+<section class="facts light"><div class="wrap facts-layout"><div><span class="pill">使って確かめられるPoC</span><h2>小さなアプリから、<br>本当に役立つかを試す。</h2><p>最初に狙うのは、複数の原本をつなぎ、見せ方を変える小規模なローカルアプリ。速さや運用実績の優位を主張する段階ではありません。</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/main/STATUS.md">対応範囲を確認する →</a></div><div><details><summary>SQLでも同じアプリを作れる？</summary><p>作れます。CatDBの特徴は、スキーマ間の対応を検査・合成でき、統合・整合する組の検索・ビューをΣ・Π・Δの共通の数学で扱うことです。単純なSELECTを短くすることより、複数の形式を行き来する処理の定義と、その結果の関係を扱うことに焦点があります。</p></details><details open><summary>いま、SQLiteの代わりに全面移行できる？</summary><p>CatDB 0.2はPoCで、SQLite互換でも本番向けの成熟度を持つ代替でもありません。有限・非循環のスキーマ、メモリに収まるデータ、1接続の排他利用が対象です。SQL、ディスク上の索引、クエリ最適化器、自動のファイル形式更新は未対応。SQLiteとの速度優位は未検証です。保存・一括更新・末尾の不完全な書込みの回復・バックアップは実装しています。</p></details><details><summary>圏論を勉強してから使う必要はある？</summary><p>Relay Deskは、そのまま使えます。ライブラリでは、対象・矢印・道の一致・スキーマ間の対応を定義します。数学の用語をすべて覚える必要はありませんが、現在のAPIはHaskellでこれらを明示的に組み立てるものです。実装例と数理の説明を公開しています。</p></details><details><summary>ライセンスとコントリビュートは？</summary><p>オリジナルのコード・UI・サイトはMIT。配布バイナリの依存ライブラリには各ライセンスが適用され、必要な表示と対応ソースを同梱しています。バグ、実際の用途、数学的な反例はGitHub Issueへ。外部PRは受け付けていません。</p></details></div></div></section>
+
+<section class="final-cta"><div class="wrap"><p class="eyebrow">そのアプリの、次の選択肢に。</p><h2>次の「CSVを取り込みたい」で、<br>CatDBを試してほしい。</h2><p>名簿でも、制作素材でも、カタログでも。<br>原本を残しながら、ひとつの見方につなげたいアプリのために。</p><div class="ctas"><a class="button" href="https://github.com/M-simplifier/catdb/releases/download/v0.2.0-poc/catdb-0.2.0-poc-windows.zip">Relay Deskを試す ↗</a><a class="button ghost" href="https://github.com/M-simplifier/catdb/issues">使いたい場面をIssueで伝える →</a></div></div></section>
+</main>
+<footer class="wrap bottom">
+<div><a class="wordmark" href="#main">CatDB</a><p class="local-detail">Haskell製の独立した実装。理論の基礎は<a href="https://arxiv.org/abs/1009.1166">Functorial Data Migration</a>。<br><a href="https://categoricaldata.net/CQL/">CQL</a>は先行研究です。CQLのコードは含んでいません。</p></div>
+<div class="links"><a href="https://github.com/M-simplifier/catdb">GitHub</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/guide.ja.md">使い方</a><a href="#model">数理とAPI</a><a href="https://github.com/M-simplifier/catdb/blob/main/LICENSE">MITライセンス</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/licensing.md">依存ライセンス</a><a href="../" lang="en" hreflang="en">English</a></div>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

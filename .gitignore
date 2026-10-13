@@ -35,11 +35,14 @@
 !/test/*.ps1
 !/test/*.py
 !/site/
+!/site/README.md
 !/site/*.html
 !/site/*.css
 !/site/*.js
 !/site/*.svg
 !/site/.nojekyll
+!/site/ja/
+!/site/ja/*.html
 !/site/assets/
 !/site/assets/*.jpg
 !/.github/

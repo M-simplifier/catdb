@@ -1,30 +1,127 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CatDB — Merge the records. Keep the relationships.</title><meta name="description" content="A one-file Haskell database built on functorial data migration. Try Relay Desk: reconcile CSV rosters, find eligible assignees, and publish a deliberate handoff."><meta name="theme-color" content="#183e34"><meta property="og:title" content="CatDB — Merge the records. Keep the relationships."><meta property="og:image" content="https://m-simplifier.github.io/catdb/assets/relay-desk.jpg"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css"></head>
-<body><header><a class="brand" href="#">C⟶atDB <small>PoC / 0.2</small></a><nav aria-label="Main navigation"><a href="#application">The app</a><a href="#model">The model</a><a href="#start">Get started</a><a href="https://github.com/M-simplifier/catdb">GitHub ↗</a></nav></header><main>
-<section class="hero wrap"><div><p class="eyebrow"><span class="dot"></span> A SMALL DATABASE. A STRUCTURAL IDEA.</p><h1>Merge the records.<br>Keep the<br><em>relationships.</em></h1><p class="lead">An embedded Haskell database where views, identity merges and compatible joins come from <strong>maps between schemas.</strong></p><div class="cta"><a class="button" href="https://github.com/M-simplifier/catdb/releases/tag/v0.2.0-poc">Try Relay Desk ↗</a><a class="text-link" href="#model">Explore the mathematics ↓</a></div><p class="hero-note">One local file · No database service · MIT source · Working PoC</p></div>
-<div class="schema-art" aria-label="Two source records resolve to one person whose team determines compatible requests"><div class="art-label">RELATIONSHIPS, MADE EXPLICIT <span>01 / 03</span></div><div class="source-pair"><div class="record"><small>TEAM DIRECTORY</small><b>Maya Chen</b><span>maya@example.test</span></div><div class="record"><small>CONTRACTORS</small><b>M. Chen</b><span>maya@example.test</span></div></div><div class="converge"><i></i><span>Σ</span><i></i></div><div class="person-node"><span class="avatar">MC</span><div><small>ONE RESOLVED PERSON</small><b>Maya Chen</b></div><span class="tag">2 sources</span></div><div class="path-line">member of <i>↓</i></div><div class="team-node">Design <span>Team</span></div><div class="path-line"><i>↑</i> required by</div><div class="request-node"><small>REQ-101</small><b>Review the welcome flow</b><span>✓ Compatible assignment</span></div><p class="art-foot">Identity by declared relationships.<br>Eligibility by agreement on team.</p></div></section>
-<div class="principle-strip"><div class="wrap"><span>Σ <b>Resolve identity</b></span><span>Π <b>Find compatible choices</b></span><span>Δ <b>Derive a deliberate view</b></span></div></div>
-<section class="wrap section" id="application"><div class="section-intro"><div><p class="eyebrow">THE REFERENCE APPLICATION</p><h2>From scattered rosters<br>to a usable work queue.</h2></div><p>Meet <strong>Relay Desk</strong>. Import the CSVs you already have, reconcile duplicate people, assign work to the right team, and send a handoff without sending the whole database.</p></div>
-<figure class="app-shot"><div class="window-caption"><span>● ● ●</span><b>Relay Desk</b><code>http://127.0.0.1:4283</code></div><img src="assets/relay-desk.jpg" alt="Actual Relay Desk: five open requests, five people from seven CSV records, compatible assignee menus, and Japanese data." width="1280" height="820" loading="lazy"><figcaption>Actual application. Haskell computes and persists the results; the browser presents them. Fictional example data.</figcaption></figure>
-<div class="workflow"><article><span class="step">01</span><h3>Bring your own CSVs.</h3><p>Map columns, name each source, and update it later. Keep original names and memberships even when records resolve to one person.</p></article><article><span class="step">02</span><h3>Choose a valid assignee.</h3><p>See team-compatible people and their open workload. Create, edit, close and reopen requests. Contradictory changes are rejected atomically.</p></article><article><span class="step">03</span><h3>Share a smaller contract.</h3><p>Export open work as CSV or structured JSON. Leave emails, source records, closed work and unused values behind.</p></article></div>
-<div class="try-note"><strong>See the difference in two clicks.</strong><div><p>In the demo, link Jon B. to Jon Bell. Six source records become four people, and the Engineering request has one eligible person. Remove the link: both identities return, with their source records intact.</p><a class="text-link" href="https://github.com/M-simplifier/catdb#start-with-a-real-application">Follow the walkthrough ↗</a></div></div></section>
-<section class="model-section" id="model"><div class="wrap"><p class="eyebrow">ONE MODEL, THREE CONSTRUCTIONS</p><div class="section-intro"><h2>The mathematics<br>does the work.</h2><p>A schema is a category <i>C</i>. An instance is a functor <i>I : C → FinSet</i>. A checked schema map <i>F : C → D</i> induces three migrations, related by two adjunctions.</p></div><div class="adjunction" aria-label="Sigma F is left adjoint to Delta F, which is left adjoint to Pi F"><span>Σ<sub>F</sub></span><i>⊣</i><span>Δ<sub>F</sub></span><i>⊣</i><span>Π<sub>F</sub></span></div>
-<div class="tabs" role="tablist" aria-label="Migration operations"><button role="tab" id="tab-sigma" aria-controls="operation-panel" aria-selected="true" data-operation="sigma">Σ <span>Identify</span></button><button role="tab" id="tab-pi" aria-controls="operation-panel" aria-selected="false" tabindex="-1" data-operation="pi">Π <span>Agree</span></button><button role="tab" id="tab-delta" aria-controls="operation-panel" aria-selected="false" tabindex="-1" data-operation="delta">Δ <span>Re-express</span></button></div>
-<div id="operation-panel" class="operation-panel" role="tabpanel" aria-labelledby="tab-sigma"><div><p class="eyebrow" id="op-label">LEFT KAN EXTENSION</p><h3 id="op-title">Identify what the relations connect.</h3><p id="op-body">Σ builds a quotient of transported elements. In Relay Desk, equal emails and explicit links generate identity classes. Original records remain traceable.</p></div><div class="formula"><code id="op-formula">(Σ_F I)(d) = colim_(F ↓ d) I</code><p id="op-api">sigmaOrigins · sigmaUnit · sigmaFactor</p></div></div>
-<div class="model-notes"><article><h3>Equations are data contracts.</h3><code>assignment.ticket.team<br>= assignment.assignee.team</code><p>The same equation is checked for UI changes, imports and library callers. An invalid final state never becomes a committed instance.</p></article><article><h3>Universal properties are callable.</h3><p>Units, counits and unique factor maps are API operations. Tests enumerate small natural-transformation sets and check both adjunction correspondences in both directions.</p><a href="https://github.com/M-simplifier/catdb/blob/main/docs/mathematics.md">Read the construction and formulas ↗</a></article></div><p class="honesty">The app assembles person/team memberships before Π and trims unreachable values after Δ. These policies are explicit. Category theory preserves declared structure; it does not infer who someone is or decide who should do the work.</p></div></section>
-<section class="wrap section developer" id="start"><div><p class="eyebrow">FOR APPLICATION DEVELOPERS</p><h2>Open a file.<br>Work with structure.</h2><p>Use the library in Haskell, the CLI in a script, or Relay Desk in a browser. Transactions share the same pure validation core.</p><ul><li>Checked schema maps and total relationships</li><li>Atomic edits with an append-only, flushed log</li><li>Incomplete-tail recovery and compact backups</li><li>Source witnesses for migration results</li></ul><a class="text-link" href="https://github.com/M-simplifier/catdb/blob/main/examples/Embedded.hs">A complete embedded example ↗</a></div><div><div class="code-card"><div>01 / RUN THE APPLICATION <span>Windows release</span></div><pre><code>.\relay-desk.exe desk.catdb --demo
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CatDB — Make your database do the connecting.</title>
+<meta name="description" content="Merge records, find compatible choices, and reshape data with one mathematical foundation. An embedded Haskell database in one local file. Try the real Relay Desk app. MIT · Working PoC.">
+<meta name="theme-color" content="#111510">
+<link rel="canonical" href="https://m-simplifier.github.io/catdb/">
+<link rel="alternate" hreflang="en" href="https://m-simplifier.github.io/catdb/">
+<link rel="alternate" hreflang="ja" href="https://m-simplifier.github.io/catdb/ja/">
+<link rel="alternate" hreflang="x-default" href="https://m-simplifier.github.io/catdb/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CatDB">
+<meta property="og:title" content="CatDB — Make your database do the connecting.">
+<meta property="og:description" content="Merge records, find compatible choices, and reshape data with one mathematical foundation. An embedded Haskell database in one local file. Try the real Relay Desk app. MIT · Working PoC.">
+<meta property="og:url" content="https://m-simplifier.github.io/catdb/">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://m-simplifier.github.io/catdb/assets/relay-desk.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="wrap top">
+  <a class="wordmark" href="#main" aria-label="CatDB home"><svg viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M28 8H11L4 18L11 28H28M11 8L23 18L11 28" stroke="#dbf278" stroke-width="2.2" stroke-linejoin="round"/><circle cx="28" cy="8" r="3" fill="#dbf278"/><circle cx="23" cy="18" r="3" fill="#dbf278"/><circle cx="28" cy="28" r="3" fill="#dbf278"/></svg>CatDB<span>v0.2 PoC</span></a>
+  <nav class="nav" aria-label="Main navigation"><a href="#why">Why CatDB</a><a href="#app">The app</a><a class="nav-cta" href="#start">Get started ↗</a><span class="languages" aria-label="Language"><a href="./" lang="en" hreflang="en" aria-current="page">EN</a><a href="ja/" lang="ja" hreflang="ja">日本語</a></span></nav>
+</header>
+<main id="main">
+<section class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <p class="eyebrow">AN EMBEDDED DATABASE FOR CONNECTED DATA</p>
+      <p class="product-type">Built in Haskell. Grounded in category theory.</p>
+      <h1>Make your<br>database do<br><em>the connecting.</em></h1>
+      <p class="lead">Merge records. Find compatible choices. Reshape data for sharing. CatDB gives these jobs <strong style="color:#e2eccf">a shared foundation in schema maps</strong>, inside one local file.</p>
+      <div class="ctas"><a class="button" href="#start">Try the real app <span aria-hidden="true">↗</span></a><a class="button ghost" href="https://github.com/M-simplifier/catdb">Explore the code <span aria-hidden="true">→</span></a></div>
+      <div class="hero-proof"><span>One local file</span><span>No database service</span><span>MIT · Working PoC</span></div>
+    </div>
+    <div class="demo" id="merge-demo">
+      <div class="demo-top"><span><i class="dot"></i>RELAY DESK / TRY THE CONNECTION</span><span class="mono">01 → 02</span></div>
+      <div class="demo-stage">
+        <div class="source-heading"><span>Different emails. Same person?</span><span>Keep both records.</span></div>
+        <div class="pair"><div class="source-person"><small>TEAM DIRECTORY</small><strong>Jon Bell</strong><code>jon@example.test</code></div><span class="link-sign" aria-hidden="true">⋯</span><div class="source-person"><small>CONTRACTORS</small><strong>Jon B.</strong><code>j.bell@example.test</code></div></div>
+        <button type="button" class="demo-trigger" id="merge-button" aria-pressed="false">Link these records as one person ↓</button>
+        <p class="demo-explain" id="merge-explain" aria-live="polite">Confirm the identity, then add a link.<br>Watch the assignee choices change with it.</p>
+        <div class="flow-arrow">RESOLVED PEOPLE → ELIGIBLE ASSIGNEES</div>
+        <div class="candidate"><div class="candidate-head"><span>Investigate sync failures · Engineering</span><span class="candidate-count" id="candidate-count">2 choices</span></div><div class="candidate-people" id="hero-candidates"><span class="person-pill"><i class="avatar">JB</i>Jon Bell</span><span class="person-pill"><i class="avatar">JB</i>Jon B.</span></div></div>
+        <div class="demo-metrics" aria-live="polite"><div><span class="metric">6</span><small>Original records</small></div><div><span class="metric" id="hero-people">5</span><small>Resolved people</small></div><div><span class="metric" id="hero-pairs">7</span><small>Eligible request–person pairs</small></div></div>
+      </div>
+      <div class="demo-bottom">Interactive replay of results recorded from the Haskell release. Fictional data; CatDB is not running in this browser.</div>
+    </div>
+  </div>
+  <noscript><p class="noscript">The interactive example needs JavaScript. Adding the link keeps all 6 records, changes 5 people to 4, and changes 7 eligible pairs to 6.</p></noscript>
+  <div class="scroll-hint">ONE CONNECTION. FOLLOW WHAT CHANGES. <span aria-hidden="true">↓</span></div>
+</section>
 
-# Your workspace, in one file.
-# Open http://127.0.0.1:4283</code></pre></div><div class="code-card"><div>02 / COMPOSE THE MODEL <span>Haskell API sketch</span></div><pre><code><span class="code-comment">-- Application-defined schema maps</span>
-resolved   &lt;- sigma identityMap roster
-candidates &lt;- piMigration eligibilityMap members
-public     &lt;- delta publicMap workspace
-handoff    &lt;- generated visibleRoots public
+<section class="pain" id="why"><div class="wrap pain-grid reveal">
+  <div><p class="eyebrow">THE LOGIC BETWEEN YOUR TABLES</p><h2>You fixed the duplicate.<br>The next screen didn't.</h2><p>Your import knows two records are one person. Your assignee query still offers both. Your export has its own idea of which name to use. The same relationship has become three pieces of application logic.</p><p class="accent">With CatDB, pass resolved people into the next computation.<br>Build the flow out of operations that preserve the relationships you declare.</p></div>
+  <div class="bug-lines">
+    <div class="bug-line"><span class="index">01</span><div><strong>These records identify one person.</strong><small>Merge through declared links. Keep the origins.</small></div><span class="sign">Σ</span></div>
+    <div class="bug-line"><span class="index">02</span><div><strong>This person fits this request.</strong><small>Find combinations whose references agree.</small></div><span class="sign">Π</span></div>
+    <div class="bug-line"><span class="index">03</span><div><strong>This is what the recipient needs.</strong><small>Read through a new schema, then select the relevant data.</small></div><span class="sign">Δ</span></div>
+    <p class="small">Your app decides identity and sharing policy. CatDB supplies the structural operations that carry those decisions through.</p>
+  </div>
+</div></section>
 
-<span class="code-comment">-- Commit a checked batch</span>
-transaction db $ \current -&gt; do
-  next &lt;- edit changes current
-  pure ((), next)</code></pre></div></div></section>
-<section class="wrap boundary"><div><p class="eyebrow">AN EXPERIMENT YOU CAN ACTUALLY USE</p><h2>Small on purpose.<br>Explicit about its limits.</h2></div><div><p>CatDB explores a local, embedded role inspired by SQLite's simplicity. It is <strong>a working PoC, not a drop-in SQLite replacement</strong>. SQL can implement these workflows too; the experiment is the coherence and inspectability of the transformations.</p><div class="boundary-grid"><div><b>Good place to experiment</b><p>Small local tools, CSV reconciliation, schema-driven views, and finite categorical data migration.</p></div><div><b>Current boundary</b><p>Acyclic schemas. In-memory data. One exclusive connection. Bounded queries. No SQL, remote service, encryption or stable-format promise.</p></div></div><a class="text-link" href="https://github.com/M-simplifier/catdb/blob/main/STATUS.md">Read the exact PoC contract ↗</a></div></section>
-<section class="closing"><div class="wrap"><div><p class="eyebrow">BUILD SOMETHING. BRING A COUNTEREXAMPLE.</p><h2>Put the idea to work.</h2><p>MIT source. A real reference app. An open question worth testing.</p></div><div class="closing-actions"><a class="button" href="https://github.com/M-simplifier/catdb/releases/tag/v0.2.0-poc">Download the PoC ↗</a><a href="https://github.com/M-simplifier/catdb/issues">Contribute through an issue →</a><small>Issue-based contributions. External PRs are not accepted.</small></div></div></section>
-</main><footer class="wrap"><a class="brand" href="#">CatDB</a><p>Independent Haskell implementation, informed by <a href="https://arxiv.org/abs/1009.1166">Functorial Data Migration</a>.<br><a href="https://categoricaldata.net/CQL/">CQL</a> is prior work; no CQL code is included.</p><div><a href="https://github.com/M-simplifier/catdb/blob/main/LICENSE">MIT license</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/licensing.md">Dependency notices</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/guide.ja.md">日本語ガイド</a></div></footer><script src="site.js"></script></body></html>
+<section class="section app-section" id="app"><div class="wrap reveal">
+  <div class="app-heading"><div><p class="eyebrow">MEET RELAY DESK</p><h2>Your first CatDB app<br>is already built.</h2></div><p>A local work queue for the CSVs on your desk. Reconcile rosters, assign requests to the right team, and export a useful handoff. Included with the release.</p></div>
+  <div class="app-frame"><div class="app-frame-head"><span><i class="dot"></i>RELAY DESK / ACTUAL APPLICATION</span><span class="filepath">desk.catdb</span></div><a class="app-zoom" href="assets/relay-desk.jpg" target="_blank" rel="noopener" aria-label="Open the full application screenshot"><img class="app-image" src="assets/relay-desk.jpg" alt="Relay Desk running locally: source rosters, resolved identities, eligible assignees, and a public handoff. Fictional sample data." width="1264" height="1076" loading="lazy"></a><div class="app-footer"><span>Haskell computes and saves. Your browser displays the results.</span><span>Separate app session, with seven imported records. Click to enlarge.</span></div></div>
+  <div class="capabilities"><div><strong>Import your CSVs</strong><small>Map columns. Update sources. Validate the batch.</small></div><div><strong>Assign the work</strong><small>Create, edit, close and reopen requests.</small></div><div><strong>Shape the handoff</strong><small>Export open requests and assigned names.</small></div><div><strong>Keep one file</strong><small>Save, reopen and back up the workspace.</small></div></div>
+  <p class="dark-note">Keep source names and emails internally; export the assigned names you need. The handoff uses Δ plus reachability from selected roots. Review titles and other exported content before sharing.</p>
+</div></section>
+
+<section class="section light"><div class="wrap">
+  <div class="split reveal">
+    <div><div class="section-label"><b>01</b> MAKE THE RULE PART OF THE SCHEMA</div><h2>One rule.<br>Every write.</h2><p class="body-copy">An assignee must belong to the request's team. Put that rule in the schema, where it applies to UI edits, reimports, and other callers.</p><p class="body-copy">Describe two paths that must reach the same team. CatDB validates the final state of each transaction and <strong>rejects the whole change when the paths disagree.</strong></p><p class="clause">SQL can express this constraint with composite foreign keys, too. CatDB makes equality of paths a direct part of the schema.</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/1c18cc2024c2e01ecb96471be2b8dc624b22c2be/reference/src/Relay/Model.hs#L80">Read the application's schema →</a></div>
+    <div class="rule-box" id="rule-box"><div class="rule-head">SCHEMA CONTRACT / THE SAME TEAM</div><div class="rule-visual"><div class="route"><span class="cell">Assignment</span>→<span class="cell">Request</span>→<span class="end">Design</span></div><div class="equals" id="rule-equals">=</div><div class="route second"><span class="cell">Assignment</span>→<span class="cell" id="rule-person">Maya</span>→<span class="end" id="rule-team">Design</span></div><div class="rule-feedback" aria-live="polite"><span class="status-dot"></span><span id="rule-status">Accepted. Both paths reach Design.</span></div><code class="rule-snippet">Equation
+  (Path "Assignment" ["ticket", "ticketTeam"])
+  (Path "Assignment" ["assignee", "rosterTeam"])</code></div><button type="button" class="rule-button" id="rule-button" aria-pressed="false"><span>Try Jon from another team</span><span aria-hidden="true">↗</span></button></div>
+  </div>
+  <div class="divider"></div>
+  <div class="split reveal">
+    <div class="mapping-block"><div class="mapping-head"><span>CHECKED SCHEMA MAPPING</span><span>Even with no data</span></div><div class="mapping-body"><div class="mapping-step"><strong>Map the objects</strong><small>OBJECTS</small></div><div class="mapping-step"><strong>Send each arrow to a path</strong><small>PATHS</small></div><div class="mapping-step"><strong>Preserve the equations</strong><small>CONTRACTS</small></div><div class="mapping-seal">mapping :: … → Either Error Mapping</div><p class="mapping-desc">A mapping that loses an equation is rejected.<br>Today's rows cannot make an invalid mapping pass.</p></div></div>
+    <div><div class="section-label"><b>02</b> CHECK THE TRANSLATION ITSELF</div><h2>Give your data<br>a checked route out.</h2><p class="body-copy">Moving a value to a new column is easy. Preserving the agreement between a request and its assignee takes more care.</p><p class="body-copy">CatDB checks a schema mapping's objects, paths, and equations <strong>before it handles the data.</strong> You can inspect and compose the mapping as a value, then use it to derive a migration.</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/1c18cc2024c2e01ecb96471be2b8dc624b22c2be/test/Main.hs#L91">See an equation-losing mapping get rejected →</a></div>
+  </div>
+</div></section>
+
+<section class="section api-area" id="model"><div class="wrap reveal">
+  <div class="api-top"><div><p class="eyebrow">THREE OPERATIONS. ONE FOUNDATION.</p><h2>Results you can<br>keep building on.</h2></div><p>Every migration returns structured data. Origins and compatible families expose how the results were formed. This is where the category theory becomes an API.</p></div>
+  <div class="operations">
+    <div class="op"><span class="op-symbol">Σ</span><div><h3>Identify and combine</h3><small>SIGMA / ORIGINS INCLUDED</small></div><div><p>Identify elements through the relations you declare. Inspect which source elements contributed to each result.</p><code>resolved &lt;- sigma identityMap roster</code></div></div>
+    <div class="op"><span class="op-symbol">Π</span><div><h3>Find what agrees</h3><small>PI / COMPATIBLE FAMILIES</small></div><div><p>Build families of values whose arrows agree. For each match, inspect the person, membership, and request that produced it.</p><code>candidates &lt;- piMigration eligibilityMap memberships</code></div></div>
+    <div class="op"><span class="op-symbol">Δ</span><div><h3>Read a different shape</h3><small>DELTA / PATHS AS A VIEW</small></div><div><p>Map a public field to an internal path. Combine the view with explicit root selection to keep only the reachable data.</p><code>public &lt;- delta publicMapping workspace<br>handoff &lt;- generated visibleRoots public</code></div></div>
+  </div>
+  <p class="math-note">API excerpts: your app supplies the schemas, mappings, and data. For each checked mapping F, the foundation is <span class="mono">Σ<sub>F</sub> ⊣ Δ<sub>F</sub> ⊣ Π<sub>F</sub></span>. Units, counits, and universal factor maps are implemented, alongside origins and family witnesses. <a href="https://github.com/M-simplifier/catdb/blob/main/docs/mathematics.md">Follow the mathematics →</a></p>
+</div></section>
+
+<section class="get-started" id="start"><div class="wrap start-grid reveal">
+  <div><p class="eyebrow">RUN IT. CHANGE SOMETHING. REOPEN IT.</p><h2>A local file.<br>A real first experiment.</h2><p>Extract the Windows download and double-click Start Relay Desk.cmd. Link the two Jon records, watch the assignee choices change, then reopen the same file. Your change is still there.</p><a class="button" href="https://github.com/M-simplifier/catdb/releases/download/v0.2.0-poc/catdb-0.2.0-poc-windows.zip">Download for Windows <span aria-hidden="true">↗</span></a><div class="start-links"><a href="https://github.com/M-simplifier/catdb#start-with-a-real-application">App walkthrough</a><a href="https://github.com/M-simplifier/catdb/blob/main/examples/Embedded.hs">Embed in Haskell</a><a href="https://github.com/M-simplifier/catdb#build">Build from source</a></div></div>
+  <div><div class="terminal"><div class="terminal-top"><span>POWERSHELL / OR RUN IT YOURSELF</span><button type="button" class="copy" id="copy-command">COPY</button></div><pre><span class="prompt">&gt; </span><span id="command">.\relay-desk.exe desk.catdb --demo</span>
+
+Relay Desk / CatDB PoC
+Open http://127.0.0.1:4283
+
+<span class="prompt"># Your data lives in desk.catdb.</span>
+<span class="prompt"># Reopen the file. Pick up where you left off.</span></pre></div><p class="small" style="margin:13px 0 0">Omit <span class="mono">--demo</span> for an empty workspace.<br>Linux and Haskell library users can build from source.</p></div>
+</div></section>
+
+<section class="facts light"><div class="wrap facts-layout">
+  <div><span class="pill">WORKING PROOF OF CONCEPT</span><h2>A small tool.<br>A testable idea.</h2><p>Start with a local app that brings several sources together and needs more than one view of them. CatDB's current promise is a model you can try and inspect.</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/main/STATUS.md">Read the exact PoC contract →</a></div>
+  <div>
+    <details><summary>Could I build this with SQL?</summary><p>Yes. CatDB's experiment is to make schema mappings checked, composable values and derive integration, compatible families, and views from Σ, Π, and Δ. It focuses on the structure of data moving between schemas, rather than making a simple SELECT shorter.</p></details>
+    <details open><summary>Where does this PoC fit today?</summary><p>Small, local applications with finite acyclic schemas and data that fits in memory. There is one exclusive connection, with atomic validated writes, flushed append-only storage, incomplete-tail recovery, and backups. There is no SQL, disk index, query optimizer, encryption, or automatic format upgrade. This is not a drop-in SQLite replacement, a production-maturity claim, or a claim to beat SQLite on speed.</p></details>
+    <details><summary>Do I need to learn category theory first?</summary><p>You can run Relay Desk directly. In the library, you define objects, arrows, path equations, and mappings in Haskell. These are runtime checked values. The complete embedded example and reference app show how to assemble them; the mathematics explains why the operations fit together.</p></details>
+    <details><summary>How do licensing and contributions work?</summary><p>Original code, UI, and site are MIT licensed. Binary dependencies keep their own licenses; notices and corresponding source are supplied with the release. Bring bugs, use cases, and mathematical counterexamples through GitHub issues. External pull requests are not accepted.</p></details>
+  </div>
+</div></section>
+
+<section class="final-cta"><div class="wrap"><p class="eyebrow">GIVE YOUR NEXT IMPORT SOMEWHERE TO GO</p><h2>Bring the CSVs.<br>Keep the connections.</h2><p>Start with the included app.<br>Then try the model on a problem you actually have.</p><div class="ctas"><a class="button" href="https://github.com/M-simplifier/catdb/releases/download/v0.2.0-poc/catdb-0.2.0-poc-windows.zip">Try Relay Desk ↗</a><a class="button ghost" href="https://github.com/M-simplifier/catdb/issues">Bring a use case →</a></div></div></section>
+</main>
+<footer class="wrap bottom"><div><a class="wordmark" href="#main">CatDB</a><p class="local-detail">An independent Haskell implementation, informed by <a href="https://arxiv.org/abs/1009.1166">Functorial Data Migration</a>.<br><a href="https://categoricaldata.net/CQL/">CQL</a> is prior work. No CQL code is included.</p></div><div class="links"><a href="https://github.com/M-simplifier/catdb">GitHub</a><a href="https://github.com/M-simplifier/catdb#start-with-a-real-application">Guide</a><a href="#model">Theory &amp; API</a><a href="https://github.com/M-simplifier/catdb/blob/main/LICENSE">MIT license</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/licensing.md">Dependency notices</a><a href="ja/" lang="ja" hreflang="ja">日本語</a></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

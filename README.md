@@ -1,16 +1,18 @@
 # CatDB
 
-**Merge the records. Keep the relationships.**
+**Make your database do the connecting.**
 
-An embedded Haskell database where schemas are categories, data are finite-set
-functors, and schema maps induce views, quotients and compatible joins.
+Merge records, find compatible choices, and reshape data for sharing with one
+mathematical foundation. CatDB is an embedded Haskell database where schemas
+are categories and checked schema maps induce views, quotients and compatible joins.
 Your data live in one native `.catdb` file. No database service or SQLite dependency.
 
 **Working proof of concept · MIT · contributions through issues only**
 
 [Website](https://m-simplifier.github.io/catdb/) ·
+[公式サイト（日本語）](https://m-simplifier.github.io/catdb/ja/) ·
 [Download](https://github.com/M-simplifier/catdb/releases/tag/v0.2.0-poc) ·
-[日本語](docs/guide.ja.md) · [Limits](STATUS.md) · [Mathematics](docs/mathematics.md)
+[日本語ガイド](docs/guide.ja.md) · [Limits](STATUS.md) · [Mathematics](docs/mathematics.md)
 
 ## Start with a real application
 
