@@ -1,11 +1,12 @@
 module CatDB.Schema
   ( Object(..), Arrow(..), Element(..), Path(..), ArrowDef(..), Equation(..)
-  , SchemaDef(..), Schema, Error(..), schema, definition, morphisms
+  , SchemaDef(..), Schema, Error(..), schema, schemaWithBudget, definition, morphisms
   , endpoint, normalize, compose, equivalent, identity
   , MappingDef(..), Mapping, mapping, domain, codomain, mappingDef
   , mapObject, mapPath, identityMapping, composeMapping
   ) where
 
+import CatDB.Budget
 import CatDB.Internal
 import Control.Monad (foldM, forM, forM_)
 import qualified Data.Map.Strict as M
@@ -17,7 +18,13 @@ identity c = Path c []
 -- Acyclic presentations give a finite, exact word problem. The size bound is
 -- on the entire path language, before quotienting; rejection is explicit.
 schema :: SchemaDef -> Either Error Schema
-schema def = do
+schema = schemaWithBudget defaultBudget
+
+schemaWithBudget :: Budget -> SchemaDef -> Either Error Schema
+schemaWithBudget budget def = do
+  ensureBudget budget SchemaObjects (toInteger (length (objects def)))
+  ensureBudget budget SchemaArrows (toInteger (length (arrows def)))
+  ensureBudget budget SchemaEquations (toInteger (length (equations def)))
   unique DuplicateObject (objects def)
   unique DuplicateArrow (map arrow (arrows def))
   let os = S.fromList (objects def)
@@ -29,13 +36,13 @@ schema def = do
           ps <- paths (S.insert o seen) (target a)
           pure [Path o (arrow a:steps p) | p <- ps]
         let ps = identity o : concat children
-        ensure (SchemaTooLarge limit) (length (take (limit+1) ps) <= limit)
+        ensureBudget budget SchemaPaths (toInteger (length (take (limit+1) ps)))
         pure ps
   forM_ (arrows def) $ \a -> do
     ensure (UnknownObject (source a)) (source a `S.member` os)
     ensure (UnknownObject (target a)) (target a `S.member` os)
   ps <- concat <$> mapM (paths S.empty) (objects def)
-  ensure (SchemaTooLarge limit) (length ps <= limit)
+  ensureBudget budget SchemaPaths (toInteger (length ps))
   let end p = foldM (\o a -> do
                 g <- lookupE (UnknownArrow a) a gs
                 ensure (InvalidPath p) (source g == o)
@@ -46,6 +53,7 @@ schema def = do
     l <- check (left eq)
     r <- check (right eq)
     ensure (NonParallel eq) (start (left eq) == start (right eq) && l == r)
+  ensureBudget budget EquationChecks (schemaEquationChecks def ps)
   -- Every occurrence in every path, with arbitrary left and right context.
   -- Taking connected components generates precisely the congruence, since the
   -- entire free path category is finite and present here.
@@ -57,7 +65,7 @@ schema def = do
       nf = quotient ps relation
   pure (Schema def gs nf ends (S.toAscList (S.fromList (M.elems nf))))
   where
-    limit = 4096
+    limit = fromInteger (max 0 (min (toInteger (maxBound :: Int) - 1) (maxSchemaPaths budget)))
     unique err xs = go S.empty xs
       where go _ [] = Right ()
             go seen (x:rest) = do

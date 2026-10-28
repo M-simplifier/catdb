@@ -1,11 +1,12 @@
 {-# LANGUAGE DeriveAnyClass #-}
 module CatDB.Instance
-  ( InstanceDef(..), Instance, instanceSchema, instanceData, instanceOf, empty
+  ( InstanceDef(..), Instance, instanceSchema, instanceData, instanceOf, instanceOfWithBudget, empty
   , elements, evaluate, Edit(..), edit, select, generated, rows
   , Components, Natural, natural, naturalSource, naturalTarget, components
   , identityNatural, composeNatural, applyComponent
   ) where
 
+import CatDB.Budget
 import CatDB.Internal
 import CatDB.Schema (endpoint)
 import Control.Monad (foldM, forM, forM_)
@@ -19,9 +20,16 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 
 instanceOf :: Schema -> InstanceDef -> Either Error Instance
-instanceOf s dat = do
+instanceOf = instanceOfWithBudget defaultBudget
+
+instanceOfWithBudget :: Budget -> Schema -> InstanceDef -> Either Error Instance
+instanceOfWithBudget budget s dat = do
+  ensureSchemaBudget budget s
+  ensureBudget budget InstanceElements (sum (map (toInteger . S.size) (M.elems (sets dat))))
+  ensureBudget budget InstanceCells (sum (map (toInteger . M.size) (M.elems (functions dat))))
   ensure InstanceShape (M.keysSet (sets dat) == objectSet s
                     && M.keysSet (functions dat) == M.keysSet (generators s))
+  ensureBudget budget EquationChecks (instanceEquationChecks s dat)
   let i = Instance s dat
   forM_ (arrows (definition s)) $ \a -> do
     xs <- elements i (source a)

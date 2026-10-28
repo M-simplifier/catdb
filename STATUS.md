@@ -6,16 +6,19 @@ same library and native database file as the command-line tools.
 
 Supported: finite acyclic schema presentations, path equations, finite-set
 instances, Delta/Sigma/Pi migration with witnesses and universal factor maps,
+immutable native catalogs of schemas and data systems, checked system correspondences,
 atomic validated edits, one-file persistence, recovery of incomplete tails,
 and compact backups. One process owns a database at a time; threads share one
 connection. Data and queries live in memory.
 
 Limits: no schema cycles, SQL, query optimizer, indexes on disk, network or
 multi-process service, encryption, or automatic schema upgrades. The category
-compiler allows at most 4,096 raw paths. Sigma allows 100,000 transported tokens
-per target object. Pi allows at most 1,000,000 search
-nodes and 100,000 result families per target object; exceeding a bound returns
-an error instead of a partial result. Large files and migrations can exhaust
+compiler defaults to at most 4,096 raw paths. Explicit configurable budgets also
+bound schema size and equation work. Sigma defaults to 100,000 transported tokens
+per migration. Pi defaults to at most 1,000,000 search nodes and 100,000 result
+families across all destination objects; exceeding a bound returns a typed error
+instead of a partial result. Catalog decoding also bounds records and replay.
+See [native catalogs](docs/native-memory.md). Large files and migrations can exhaust
 memory. The on-disk format is versioned by its frame marker, but compatibility
 across future PoC versions is not promised. Keep backups before upgrading.
 

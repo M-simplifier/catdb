@@ -10,6 +10,9 @@ Import `CatDB`. [Embedded example](../examples/Embedded.hs) ·
 | Subinstances | `select` (greatest restriction), `generated` (least closure) |
 | Migration | `delta`, `sigma`, `piMigration`, witnesses, universal factor maps |
 | Queries | `pull`, `push`, `joinOver`, `thenQ`, `runQuery` |
+| Computational budgets | `Budget`, `defaultBudget`, `schemaWithBudget`, `instanceOfWithBudget`, `deltaWithBudget`, `sigmaWithBudget`, `piMigrationWithBudget`, `runQueryWithBudget` |
+| System correspondences | `systemMorphism`, `identitySystemMorphism`, `composeSystemMorphism` |
+| Native catalogs | `emptyCatalog`, `recordSchema`, `recordInstance`, `recordMapping`, `recordCorrespondence`, `derive`, `adoptSystem`, `adoptView`, `encodeCatalog`, `projectCatalog` |
 | Storage | `createDatabase`, `openDatabase`, `closeDatabase`, `withDatabase`, `snapshot`, `transaction`, `commit`, `copyDatabase`, `backupBytes` |
 
 Paths list arrows in traversal order; `Path "Task" []` is an identity. Arrows
@@ -27,6 +30,16 @@ nothing. Success appends and flushes one frame before acknowledgement. An
 uncertain commit poisons the handle: reopen and inspect instead of blindly
 retrying. Use `bracket` to close handles and share one handle among threads.
 Other connections, including other processes, receive `Busy`.
+
+For expensive native derivations, compute and fully evaluate the result in a
+worker before the transaction. Check the captured source/catalog revision in the
+callback, then install the complete combined instance. `NFData` instances support
+this boundary. [Native catalog semantics and source binding](native-memory.md)
+describe typed witnesses, immutable revisions, and active versus pinned views.
+Use `encodeCatalog` as the admission check under the intended reopen budget;
+its inexpensive replay footprint prevents saving a history that only fails its
+aggregate replay or witness budget on the next read. Lower budgets are checked
+against measured work, and the operational budget remains a caller choice.
 
 An initial schema/instance snapshot is followed by diff frames; a schema change
 writes a snapshot. Frames contain `CATTX001`, length/complement, Binary payload,

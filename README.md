@@ -12,7 +12,7 @@ Your data live in one native `.catdb` file. No database service or SQLite depend
 [Website](https://m-simplifier.github.io/catdb/) ·
 [公式サイト（日本語）](https://m-simplifier.github.io/catdb/ja/) ·
 [Download](https://github.com/M-simplifier/catdb/releases/tag/v0.2.0-poc) ·
-[日本語ガイド](docs/guide.ja.md) · [Limits](STATUS.md) · [Mathematics](docs/mathematics.md)
+[日本語ガイド](docs/guide.ja.md) · [Limits](STATUS.md) · [Mathematics](docs/mathematics.md) · [Native catalogs](docs/native-memory.md)
 
 ## Start with a real application
 

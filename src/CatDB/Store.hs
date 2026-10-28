@@ -1,12 +1,13 @@
 {-# LANGUAGE DeriveAnyClass, ForeignFunctionInterface, ScopedTypeVariables #-}
 module CatDB.Store
-  ( Database, StoreError(..), createDatabase, openDatabase, closeDatabase
+  ( Database, StoreError(..), createDatabase, openDatabase, openDatabaseWithBudget, closeDatabase
   , withDatabase, snapshot, transaction, commit, copyDatabase, backupBytes, recoveredBytes
   ) where
 
+import CatDB.Budget
 import CatDB.Internal
-import CatDB.Schema (schema)
-import CatDB.Instance (instanceOf, edit, Edit)
+import CatDB.Schema (schemaWithBudget)
+import CatDB.Instance (instanceOfWithBudget, edit, Edit)
 import Control.Concurrent.MVar
 import Control.Exception
 import Control.Monad (when)
@@ -122,18 +123,21 @@ createDatabase path initial = capture $ mask_ $
     Database <$> newMVar (Just (Open fd initial offset 0 False))
 
 openDatabase :: FilePath -> IO (Either StoreError Database)
-openDatabase path = capture $ mask_ $
+openDatabase = openDatabaseWithBudget defaultBudget
+
+openDatabaseWithBudget :: Budget -> FilePath -> IO (Either StoreError Database)
+openDatabaseWithBudget budget path = capture $ mask_ $
   bracketOnError (getHandle path False) closeHandle $ \fd -> do
     size <- alloca $ \p -> native "size" (c_size fd p) >> peek p
-    (s,dat,offset) <- replay fd size 0 Nothing
-    i <- either (failStore . DomainError) pure (instanceOf s dat)
+    (s,dat,offset) <- replay budget fd size 0 Nothing
+    i <- either (failStore . DomainError) pure (instanceOfWithBudget budget s dat)
     when (offset < size) $ do
       native "recover incomplete tail" (c_truncate fd offset)
       native "flush recovery" (c_sync fd)
     Database <$> newMVar (Just (Open fd i offset (size-offset) False))
 
-replay :: CInt -> Int64 -> Int64 -> Maybe (Schema,InstanceDef) -> IO (Schema,InstanceDef,Int64)
-replay fd size offset previous
+replay :: Budget -> CInt -> Int64 -> Int64 -> Maybe (Schema,InstanceDef) -> IO (Schema,InstanceDef,Int64)
+replay budget fd size offset previous
   | size-offset < 24 = finish
   | otherwise = do
       bytes <- readBytes fd 24
@@ -151,12 +155,12 @@ replay fd size offset previous
                               | otherwise -> bad "trailing record bytes"
         next <- case record of
           Snapshot def dat -> do
-            s <- either (failStore . DomainError) pure (schema def)
+            s <- either (failStore . DomainError) pure (schemaWithBudget budget def)
             pure (s,dat)
           Changes changes -> case previous of
             Nothing -> bad "first record is not a snapshot"
             Just (s,dat) -> pure (s,foldl' applyChange dat changes)
-        replay fd size (offset + fromIntegral n + 40) (Just next)
+        replay budget fd size (offset + fromIntegral n + 40) (Just next)
   where
     bad msg = failStore (Corrupt (toInteger offset) msg)
     finish = case previous of

@@ -1,6 +1,7 @@
 module Main (main) where
 
 import CatDB
+import NativeMemory (nativeMemoryTests)
 import Demo
 import qualified Relay.Model as Relay
 import qualified Data.Aeson as JSON
@@ -251,5 +252,5 @@ main = do
       hFlush stdout
       _ <- getLine
       closeDatabase db >>= ok
-    [dir] -> pureTests >> referenceTests >> storeTests dir
+    [dir] -> pureTests >> referenceTests >> nativeMemoryTests (dir </> "native") >> storeTests dir
     _ -> die "laws TEST_DIRECTORY | busy FILE | hold FILE"

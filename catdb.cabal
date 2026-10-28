@@ -16,7 +16,8 @@ description: A proof of concept embedded database with exact finite categorical
   a practical local roster reconciliation and assignment application.
 extra-source-files: README.md, CONTRIBUTING.md, STATUS.md, docs/*.md,
   reference/web/*, samples/*.csv, examples/*.json, test/*.py, test/*.ps1,
-  build.ps1, site/*.html, site/*.css, site/*.js, site/*.svg, site/assets/*.jpg
+  build.ps1, site/*.html, site/*.css, site/*.js, site/*.svg, site/assets/*.jpg,
+  test/negative/*.hs
 
 source-repository head
   type: git
@@ -26,13 +27,13 @@ common settings
   default-language: Haskell2010
   ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns
   default-extensions: OverloadedStrings DeriveGeneric DerivingStrategies GeneralizedNewtypeDeriving
-  build-depends: base >=4.16 && <5, containers, text, bytestring, binary, aeson >=2, mtl
+  build-depends: base >=4.16 && <5, containers, text, bytestring, binary, aeson >=2, mtl, deepseq
 
 library
   import: settings
   hs-source-dirs: src
-  exposed-modules: CatDB, CatDB.Schema, CatDB.Instance, CatDB.Migration, CatDB.Store
-  other-modules: CatDB.Internal
+  exposed-modules: CatDB, CatDB.Schema, CatDB.Instance, CatDB.Migration, CatDB.Store, CatDB.Budget, CatDB.System, CatDB.Catalog
+  other-modules: CatDB.Internal, CatDB.Catalog.Core, CatDB.Catalog.Native
   c-sources: cbits/file.c
   include-dirs: cbits
 
@@ -64,6 +65,6 @@ test-suite laws
   type: exitcode-stdio-1.0
   hs-source-dirs: test, app, reference/src
   main-is: Main.hs
-  other-modules: Demo, Relay.Model
+  other-modules: Demo, Relay.Model, NativeMemory
   build-depends: catdb, directory, filepath, process, QuickCheck >=2.14
   ghc-options: -threaded -rtsopts

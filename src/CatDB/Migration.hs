@@ -1,15 +1,18 @@
 module CatDB.Migration
-  ( delta, deltaNatural
-  , Lan, sigma, sigmaInstance, sigmaOrigins, sigmaUnit, sigmaFactor, sigmaNatural
-  , Ran, piMigration, piInstance, piFamilies, piCounit, piFactor, piNatural
-  , Query, pull, push, joinOver, thenQ, runQuery, querySource, queryTarget
+  ( delta, deltaWithBudget, deltaNatural, deltaNaturalWithBudget
+  , Lan, sigma, sigmaWithBudget, sigmaInstance, sigmaOrigins, sigmaUnit, sigmaFactor, sigmaNatural, sigmaCounit
+  , Ran, PiStatistics(..), piMigration, piMigrationWithBudget, piMigrationWithStatistics, piInstance, piFamilies, piCounit, piFactor, piNatural, piUnit
+  , Query, pull, push, joinOver, thenQ, runQuery, runQueryWithBudget, querySource, queryTarget
   ) where
 
+import CatDB.Budget
 import CatDB.Internal
 import CatDB.Schema
 import CatDB.Instance
 import Control.Monad (forM)
-import Control.Monad.State.Strict (StateT, evalStateT, get, put, lift)
+import Control.DeepSeq (NFData)
+import GHC.Generics (Generic)
+import Control.Monad.State.Strict (StateT, runStateT, get, put, lift)
 import Data.List (minimumBy, sort)
 import Data.Ord (comparing)
 import Data.Map.Strict (Map)
@@ -31,20 +34,28 @@ checkedInput :: Mapping -> Instance -> Either Error ()
 checkedInput f i = ensure SchemaMismatch (instanceSchema i == domain f)
 
 delta :: Mapping -> Instance -> Either Error Instance
-delta f j = do
+delta = deltaWithBudget defaultBudget
+
+deltaWithBudget :: Budget -> Mapping -> Instance -> Either Error Instance
+deltaWithBudget budget f j = do
   ensure SchemaMismatch (instanceSchema j == codomain f)
+  ensureSchemaBudget budget (domain f)
+  ensureInstanceBudget budget j
   ss <- mapBy (objects (definition (domain f))) $ \c -> mapObject f c >>= elements j
   fs <- mapBy (arrows (definition (domain f))) $ \a -> do
     fc <- mapObject f (source a)
     xs <- elements j fc
     p <- mapPath f (Path (source a) [arrow a])
     mapBy (S.toAscList xs) (evaluate j p)
-  instanceOf (domain f) (InstanceDef ss (M.mapKeys arrow fs))
+  instanceOfWithBudget budget (domain f) (InstanceDef ss (M.mapKeys arrow fs))
 
 deltaNatural :: Mapping -> Natural -> Either Error Natural
-deltaNatural f n = do
-  i <- delta f (naturalSource n)
-  j <- delta f (naturalTarget n)
+deltaNatural = deltaNaturalWithBudget defaultBudget
+
+deltaNaturalWithBudget :: Budget -> Mapping -> Natural -> Either Error Natural
+deltaNaturalWithBudget budget f n = do
+  i <- deltaWithBudget budget f (naturalSource n)
+  j <- deltaWithBudget budget f (naturalTarget n)
   cs <- mapBy (objects (definition (domain f))) $ \c -> do
     fc <- mapObject f c
     lookupE NaturalShape fc (components n)
@@ -61,14 +72,23 @@ sigmaInstance = sigmaResult
 -- Pointwise left Kan extension: (Sigma_F I)(d) = colim_(F down d) I.
 -- Tokens (c,p,x) denote x at c, transported along p : F c -> d.
 sigma :: Mapping -> Instance -> Either Error Lan
-sigma f i = do
+sigma = sigmaWithBudget defaultBudget
+
+sigmaWithBudget :: Budget -> Mapping -> Instance -> Either Error Lan
+sigmaWithBudget budget f i = do
   checkedInput f i
+  ensureSchemaBudget budget (codomain f)
+  ensureInstanceBudget budget i
+  counts <- mapBy ds $ \d -> sum <$> forM cs (\c -> do
+    fc <- mapObject f c
+    xs <- elements i c
+    pure (toInteger (length (hom dest fc d)) * toInteger (S.size xs)))
+  ensureBudget budget SigmaTokens (sum (M.elems counts))
   names <- mapBy ds $ \d -> do
     tokens <- concat <$> forM cs (\c -> do
       fc <- mapObject f c
       xs <- elements i c
       pure [(c,p,x) | p <- hom dest fc d, x <- S.toAscList xs])
-    ensure (QueryLimit "Sigma tokens per object" (toInteger (length tokens))) (length tokens <= 100000)
     relations <- concat <$> forM (arrows (definition (domain f))) (\a -> do
       fa <- mapPath f (Path (source a) [arrow a])
       ft <- mapObject f (target a)
@@ -91,7 +111,7 @@ sigma f i = do
       y <- lookupE (InternalInvariant "Sigma arrow") (c,q,x) to
       pure (label,y)
     pure (M.fromList pairs)
-  result <- instanceOf dest (InstanceDef ss (M.mapKeys arrow fs))
+  result <- instanceOfWithBudget budget dest (InstanceDef ss (M.mapKeys arrow fs))
   pure (Lan f i result names)
   where
     dest = codomain f
@@ -146,25 +166,41 @@ piFamilies = compatibleFamilies
 -- Pointwise right Kan extension: (Pi_F I)(d) = lim_(d down F) I.
 -- A row is a compatible family, not an unrestricted Cartesian product.
 piMigration :: Mapping -> Instance -> Either Error Ran
-piMigration f i = do
+piMigration = piMigrationWithBudget defaultBudget
+
+piMigrationWithBudget :: Budget -> Mapping -> Instance -> Either Error Ran
+piMigrationWithBudget budget f i = fst <$> piMigrationWithStatistics budget f i
+
+data PiStatistics = PiStatistics
+  { piExploredBindings :: Integer, piResultFamilies :: Integer }
+  deriving (Eq, Show, Generic)
+instance NFData PiStatistics
+
+piMigrationWithStatistics :: Budget -> Mapping -> Instance -> Either Error (Ran,PiStatistics)
+piMigrationWithStatistics budget f i = do
   checkedInput f i
-  families <- mapBy ds $ \d -> do
-    slots <- concat <$> forM cs (\c -> do
-      fc <- mapObject f c
-      pure [(c,p) | p <- hom dest d fc])
-    domains <- forM slots $ \slot@(c,_) -> (,) slot . S.toAscList <$> elements i c
-    constraints <- concat <$> forM (arrows (definition (domain f))) (\a -> do
-      fc <- mapObject f (source a)
-      fa <- mapPath f (Path (source a) [arrow a])
-      forM (hom dest d fc) $ \p -> do
-        q <- compose dest p fa
-        pure ((source a,p), Path (source a) [arrow a], (target a,q)))
-    arcs <- forM constraints $ \(u,a,v) -> do
-      xs <- elements i (start a)
-      fn <- mapBy (S.toAscList xs) (evaluate i a)
-      pure (u,v,fn,M.fromListWith S.union [(y,S.singleton x) | (x,y) <- M.toList fn])
-    valid <- sort <$> compatibleFamiliesSearch (M.fromList [(slot,S.fromList xs) | (slot,xs) <- domains]) arcs
-    pure (M.fromList (zip (map (Element . ("p" <>) . T.pack . show) [(0::Int)..]) valid))
+  ensureSchemaBudget budget (codomain f)
+  ensureInstanceBudget budget i
+  (pairs,(bindingCount,familyCount)) <- runStateT (forM ds $ \d -> do
+    (domains,arcs) <- lift $ do
+      slots <- concat <$> forM cs (\c -> do
+        fc <- mapObject f c
+        pure [(c,p) | p <- hom dest d fc])
+      domains <- forM slots $ \slot@(c,_) -> (,) slot . S.toAscList <$> elements i c
+      constraints <- concat <$> forM (arrows (definition (domain f))) (\a -> do
+        fc <- mapObject f (source a)
+        fa <- mapPath f (Path (source a) [arrow a])
+        forM (hom dest d fc) $ \p -> do
+          q <- compose dest p fa
+          pure ((source a,p), Path (source a) [arrow a], (target a,q)))
+      arcs <- forM constraints $ \(u,a,v) -> do
+        xs <- elements i (start a)
+        fn <- mapBy (S.toAscList xs) (evaluate i a)
+        pure (u,v,fn,M.fromListWith S.union [(y,S.singleton x) | (x,y) <- M.toList fn])
+      pure (M.fromList [(slot,S.fromList xs) | (slot,xs) <- domains],arcs)
+    valid <- sort <$> compatibleFamiliesSearch budget domains arcs
+    pure (d,M.fromList (zip (map (Element . ("p" <>) . T.pack . show) [(0::Int)..]) valid))) (0,0)
+  let families = M.fromList pairs
   let ss = M.map M.keysSet families
       reverseFamilies = M.map (M.fromList . map (\(x,fam) -> (fam,x)) . M.toList) families
   fs <- mapBy (arrows (definition dest)) $ \a -> do
@@ -178,8 +214,8 @@ piMigration f i = do
         q <- compose dest (Path (source a) [arrow a]) p
         lookupE NaturalShape (c,q) family
       lookupE (InternalInvariant "Pi restriction") restricted to) from
-  result <- instanceOf dest (InstanceDef ss (M.mapKeys arrow fs))
-  pure (Ran f i result families)
+  result <- instanceOfWithBudget budget dest (InstanceDef ss (M.mapKeys arrow fs))
+  pure (Ran f i result families,PiStatistics bindingCount familyCount)
   where
     dest = codomain f
     ds = objects (definition dest)
@@ -188,18 +224,18 @@ piMigration f i = do
 -- An indexed constraint join, with the same limit semantics as the definition.
 -- Bind the smallest remaining domain, propagating both functions and inverse
 -- images. Never materialize the Cartesian product merely to filter it later.
-compatibleFamiliesSearch :: Map Slot (S.Set Element)
+compatibleFamiliesSearch :: Budget -> Map Slot (S.Set Element)
   -> [(Slot,Slot,Map Element Element,Map Element (S.Set Element))]
-  -> Either Error [Family]
-compatibleFamiliesSearch domains arcs = evalStateT (search M.empty domains) (0,0)
+  -> StateT (Integer,Integer) (Either Error) [Family]
+compatibleFamiliesSearch budget domains arcs = search M.empty domains
   where
-    search :: Family -> Map Slot (S.Set Element) -> StateT (Int,Int) (Either Error) [Family]
+    search :: Family -> Map Slot (S.Set Element) -> StateT (Integer,Integer) (Either Error) [Family]
     search bound remaining = do
       (nodes,results) <- get
-      lift (ensure (QueryLimit "Pi explored bindings" (toInteger nodes)) (nodes < 1000000))
+      lift (ensureBudget budget PiBindings (toInteger nodes + 1))
       put (nodes+1,results)
       if M.null remaining then do
-        lift (ensure (QueryLimit "Pi result families" (toInteger results)) (results < 100000))
+        lift (ensureBudget budget PiFamilies (toInteger results + 1))
         put (nodes+1,results+1)
         pure [bound]
       else do
@@ -268,10 +304,26 @@ thenQ q r = do
   pure (Query (querySource q) (queryTarget r) (Then q r))
 
 runQuery :: Query -> Instance -> Either Error Instance
-runQuery q i = do
+runQuery = runQueryWithBudget defaultBudget
+
+runQueryWithBudget :: Budget -> Query -> Instance -> Either Error Instance
+runQueryWithBudget budget q i = do
   ensure SchemaMismatch (instanceSchema i == querySource q)
   case program q of
-    Pull f -> delta f i
-    Push f -> sigmaInstance <$> sigma f i
-    Join f -> piInstance <$> piMigration f i
-    Then a b -> runQuery a i >>= runQuery b
+    Pull f -> deltaWithBudget budget f i
+    Push f -> sigmaInstance <$> sigmaWithBudget budget f i
+    Join f -> piInstance <$> piMigrationWithBudget budget f i
+    Then a b -> runQueryWithBudget budget a i >>= runQueryWithBudget budget b
+
+-- The other half of each adjunction, built from the universal factors.
+sigmaCounit :: Mapping -> Instance -> Either Error Natural
+sigmaCounit f j = do
+  pulled <- delta f j
+  l <- sigma f pulled
+  sigmaFactor l j (identityNatural pulled)
+
+piUnit :: Mapping -> Instance -> Either Error Natural
+piUnit f j = do
+  pulled <- delta f j
+  r <- piMigration f pulled
+  piFactor r j (identityNatural pulled)
