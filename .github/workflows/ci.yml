@@ -29,6 +29,8 @@ jobs:
       - run: cabal test laws --test-show-details=direct --test-options="${{ runner.temp }}/catdb-laws"
       - name: Actual HTTP workflow
         run: python3 test/http_smoke.py "$(cabal list-bin relay-desk)" reference/web
+      - name: Studio native HTTP workflow
+        run: python3 test/studio_http.py "$(cabal list-bin catdb-studio)" --api-only
       - name: JavaScript syntax
         run: |
           node --check reference/web/app.js

@@ -11,6 +11,12 @@ The pinned Nix shell resolves GHC-WASM 9.14.1.20260330 (GHC source commit
 05e0ef08e100cf3bd2150adcf8e53ba9ad30519a). The native CatDB library APIs and
 store frame protocol are unchanged.
 
+The existing Ubuntu CI job also runs `test/studio_http.py EXECUTABLE --api-only`.
+That mode uses inert temporary carrier assets solely to start the normal native
+launcher, then exercises the same semantic/storage HTTP workflows. Its output
+explicitly excludes a Miso/WASM check; it needs no WASM toolchain. Compiled
+frontend serving and browser acceptance are separate release checks.
+
 `test/studio_http.py EXECUTABLE COMPILED-WEB [LEGACY-FILE]` launches the real
 server and checks local-session/origin protection, compiled WASM serving,
 invalid reading-note draft rejection without a version/native-backup/file-size

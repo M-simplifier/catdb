@@ -13,7 +13,7 @@ import urllib.error
 import urllib.request
 
 
-def run(executable, assets, legacy=None):
+def run(executable, assets, legacy=None, verify_frontend=True):
     with tempfile.TemporaryDirectory(prefix="catdb-studio-") as folder:
         root = pathlib.Path(folder)
         process = subprocess.Popen(
@@ -84,11 +84,15 @@ def run(executable, assets, legacy=None):
 
             assert http("api/state", session=False)[0] == 403
             assert http("api/state", origin="https://example.invalid")[0] == 403
-            status, headers, body = http("studio-gui.wasm", session=False)
-            assert status == 200 and body[:4] == b"\0asm", "Compiled Miso WASM is not being served"
-            assert "wasm" in headers.get_content_type()
-            assert http("index.js", session=False)[0] == 200
-            print("PASS session/origin protection and real compiled WASM serving")
+            if verify_frontend:
+                status, headers, body = http("studio-gui.wasm", session=False)
+                assert status == 200 and body[:4] == b"\0asm", "Compiled Miso WASM is not being served"
+                assert "wasm" in headers.get_content_type()
+                assert http("index.js", session=False)[0] == 200
+                print("PASS session/origin protection and real compiled WASM serving")
+            else:
+                assert http("index.html", session=False)[0] == 200
+                print("PASS session/origin protection (native backend; fixture assets, no Miso/WASM check)")
 
             command("create", path="読書メモ.catdb", preset="reading")
             initial = inspect("r1")
@@ -260,5 +264,16 @@ def run(executable, assets, legacy=None):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        raise SystemExit("studio_http.py CATDB-STUDIO-EXECUTABLE COMPILED-WEB [LEGACY.catdb]")
-    run(pathlib.Path(sys.argv[1]).resolve(), pathlib.Path(sys.argv[2]).resolve(), sys.argv[3] if len(sys.argv)>3 else None)
+        raise SystemExit("studio_http.py CATDB-STUDIO-EXECUTABLE (COMPILED-WEB | --api-only) [LEGACY.catdb]")
+    executable = pathlib.Path(sys.argv[1]).resolve()
+    legacy = sys.argv[3] if len(sys.argv)>3 else None
+    if sys.argv[2] == "--api-only":
+        # Carrier assets let the normal native launcher start. They are never
+        # presented as the real frontend and perform no application logic.
+        with tempfile.TemporaryDirectory(prefix="catdb-studio-http-assets-") as folder:
+            assets = pathlib.Path(folder)
+            (assets / "index.html").write_text("<!doctype html><title>Studio backend test fixture</title>", encoding="utf-8")
+            (assets / "studio-gui.wasm").write_bytes(b"\0asm\1\0\0\0")
+            run(executable, assets, legacy, verify_frontend=False)
+    else:
+        run(executable, pathlib.Path(sys.argv[2]).resolve(), legacy)
