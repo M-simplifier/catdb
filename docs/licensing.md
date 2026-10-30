@@ -1,17 +1,26 @@
 # Licensing and binary notices
 
-CatDB's original Haskell/C source, Relay Desk UI, documentation, sample data and
+CatDB's original Haskell/C source, Studio and Relay Desk UI, documentation, sample data and
 website are under the [MIT license](../LICENSE). No CQL code is incorporated.
 The mathematical reference is credited, not copied. The UI uses system fonts,
 original styles and an actual screenshot with fictional data; there are no
 third-party images, CDN scripts or bundled font files.
 
-The Windows release was inspected against the resolved Cabal dependency
-closure and the installed GHC toolchain. Its 112 Haskell/runtime dependency
-entries declare BSD, MIT, ISC or zlib licenses. The distribution includes their
+The Windows release is inspected against the resolved Cabal dependency
+closure and the installed GHC toolchain. The dependency manifest records exact
+Haskell/runtime names, versions and declared licenses. The distribution includes their
 full available license files in THIRD_PARTY_NOTICES.txt, plus MinGW runtime,
 LLVM and libffi notices. The dependency manifest records names and versions.
 These licenses remain in force; the MIT label does not relicense dependencies.
+
+Studio also distributes Miso 1.12.0.0 (BSD-3-Clause), the generated GHC-WASM
+runtime/FFI loader, and browser_wasi_shim 0.3.0 (MIT/Apache-2.0). Original Miso
+and shim notices, plus collected GHC/WASI/LLVM notice texts and a frontend
+dependency manifest, are under studio-web/licenses in the package. The pinned
+WASM compiler uses the Native bignum backend; the native executables use GMP.
+The WASI SDK binary distribution is identified by its upstream build timestamp;
+the notice manifest distinguishes license-text source revisions from a libc
+binary revision that was not independently established.
 
 **GMP needs additional treatment.** GHC 9.6.7 on this host uses the GMP backend
 and statically includes GMP 6.3.0. It is distributed under LGPL-3.0-or-later

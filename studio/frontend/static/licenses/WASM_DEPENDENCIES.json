@@ -1,0 +1,106 @@
+{
+  "compiler": "ghc-9.14.1.20260330",
+  "ghcCommit": "05e0ef08e100cf3bd2150adcf8e53ba9ad30519a",
+  "packages": [
+    {
+      "name": "array",
+      "version": "0.5.8.0",
+      "license": "BSD3"
+    },
+    {
+      "name": "base",
+      "version": "4.22.0.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "binary",
+      "version": "0.8.9.3",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "bytestring",
+      "version": "0.12.2.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "containers",
+      "version": "0.8",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "deepseq",
+      "version": "1.5.1.0",
+      "license": "BSD3"
+    },
+    {
+      "name": "ghc-boot-th",
+      "version": "9.14.1.20260330",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "ghc-experimental",
+      "version": "9.1401.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "ghc-internal",
+      "version": "9.1401.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "ghc-prim",
+      "version": "0.13.1",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "miso",
+      "version": "1.12.0.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "mtl",
+      "version": "2.3.1",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "pretty",
+      "version": "1.1.3.6",
+      "license": "BSD3"
+    },
+    {
+      "name": "rts",
+      "version": "1.0.3",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "system-cxx-std-lib",
+      "version": "1.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "template-haskell",
+      "version": "2.24.0.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "text",
+      "version": "2.1.3",
+      "license": "BSD-2-Clause"
+    },
+    {
+      "name": "transformers",
+      "version": "0.6.1.2",
+      "license": "BSD3"
+    }
+  ],
+  "noticeSources": [
+    "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-21.1.8/llvm/LICENSE.TXT",
+    "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-21.1.8/libcxx/LICENSE.TXT",
+    "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-21.1.8/libcxxabi/LICENSE.TXT",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-APACHE",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-APACHE-LLVM",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-MIT",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/libc-top-half/musl/COPYRIGHT"
+  ]
+}

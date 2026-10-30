@@ -9,6 +9,29 @@
 !/catdb.cabal
 !/cabal.project
 !/build.ps1
+!/build-frontend.ps1
+!/package-studio.ps1
+!/Start CatDB Studio.cmd
+!/THIRD_PARTY_NOTICES.md
+!/scripts/
+!/scripts/*.py
+!/studio/
+!/studio/server/
+!/studio/server/**
+!/studio/shared/
+!/studio/shared/**
+!/studio/cbits/
+!/studio/cbits/*.c
+!/studio/frontend/
+!/studio/frontend/*.cabal
+!/studio/frontend/cabal.project
+!/studio/frontend/flake.nix
+!/studio/frontend/flake.lock
+!/studio/frontend/build.sh
+!/studio/frontend/app/
+!/studio/frontend/app/*.hs
+!/studio/frontend/static/
+!/studio/frontend/static/**
 !/Start Relay Desk.cmd
 !/src/
 !/src/**

@@ -1,59 +1,77 @@
 # CatDB
 
-**Make your database do the connecting.**
+**Open your database. Follow the connections.**
 
-Merge records, find compatible choices, and reshape data for sharing with one
-mathematical foundation. CatDB is an embedded Haskell database where schemas
-are categories and checked schema maps induce views, quotients and compatible joins.
-Your data live in one native `.catdb` file. No database service or SQLite dependency.
+CatDB is an embedded Haskell database of finite functors. Schemas describe
+objects, total arrows and equal paths. Checked schema mappings induce real
+Δ views, Σ quotients and Π compatible families. Your data, immutable revisions,
+mappings and provenance live in one native `.catdb` file.
 
 **Working proof of concept · MIT · contributions through issues only**
 
 [Website](https://m-simplifier.github.io/catdb/) ·
 [公式サイト（日本語）](https://m-simplifier.github.io/catdb/ja/) ·
-[Download](https://github.com/M-simplifier/catdb/releases/tag/v0.2.0-poc) ·
-[日本語ガイド](docs/guide.ja.md) · [Limits](STATUS.md) · [Mathematics](docs/mathematics.md) · [Native catalogs](docs/native-memory.md)
+[Download v0.3.0-poc](https://github.com/M-simplifier/catdb/releases/tag/v0.3.0-poc) ·
+[Studio guide](docs/studio.md) · [Studioの使い方](docs/studio.ja.md) ·
+[Limits](STATUS.md) · [Mathematics](docs/mathematics.md) · [Native catalogs](docs/native-memory.md)
 
-## Start with a real application
+## Start with CatDB Studio
 
-**Relay Desk** reconciles CSV rosters, assigns requests to people on the right
-team, and exports a public handoff. It is a local, single-user application
-backed by this library—not a browser simulation or hardcoded result.
+Extract the Windows package and double-click **Start CatDB Studio.cmd**.
+No compiler or separate database service is needed. The native application
+opens its Miso/WASM interface in your browser. Keep `studio-web` beside the
+executable. The interface is Japanese; the English guide covers the full entry.
 
-![Relay Desk running against a local CatDB file](site/assets/relay-desk.jpg)
+Create a reading-notes fixture, a merge/compatible-family fixture, or a blank
+database and your own finite acyclic schema. Open an existing `.catdb` by path.
+A bare filename is saved under `data` beside the executable; the active absolute
+path is shown in Files/export. Close and reopen reliably, or export a native
+backup. Legacy files without a catalog open read-only and can be adopted into
+a new file while preserving the original.
 
-Extract the Windows release and double-click `Start Relay Desk.cmd`, or run:
+Try the reading fixture:
+
+1. Select `Note / n1`: `book` and `quote → quoteBook` both reach `Book / b1`.
+2. Change only `book` to `b2`. The focused diagram splits. The real engine
+   rejects that draft; the committed revision stays unchanged.
+3. Change `quote` to `q2` too, check the whole draft, then apply both changes
+   atomically as a new revision. No relationship is silently repaired.
+4. Create a Δ view using `cards`. Three notes remain three cards, even when
+   two refer to the same book. Follow a card's provenance into its source
+   revision. Subsequent source edits mark the old view stale; recompute explicitly.
+
+The generic editors construct objects/arrows/equations, add/edit/delete records,
+build checked mappings, and execute Δ, Σ and Π. Result rows expose PullRef,
+SigmaClass, PiFamily (including empty families) and GeneratedRef witnesses.
+Σ does not establish real-world identity; Π does not establish factual truth.
+Fixture captions are fictional display labels; this release adds no generic
+scalar/string column system. [Detailed walkthrough](docs/studio.md).
 
 ```powershell
-.\relay-desk.exe desk.catdb --demo
-# Open http://127.0.0.1:4283
+.\catdb-studio.exe --browser
+# Optional: --file C:\data\notes.catdb --data-dir C:\data --port 4284
 ```
 
-Omit `--demo` for a blank workspace. Existing files reopen without reseeding.
-Stop with Ctrl+C. Restore a full backup by launching the app with the downloaded
-`.catdb` file as its first argument. Parent directories must already exist.
+The launch URL contains a fresh local session token. The server binds only to
+loopback. Ctrl+C or closing its console stops it. Drafts are unsaved browser
+proposals; the native Haskell engine validates, checks the expected revision,
+and commits. Native `.catdb` remains canonical, without an authoritative JSON
+or SQLite sidecar. [Definition export example](examples/StudioExport.hs).
 
-Try this workflow:
+## Relay Desk is an application example
 
-1. **People & sources:** six records are five people. Maya's equal email
-   addresses identify her two records; both original names remain inspectable.
-2. Link **Jon B.** and **Jon Bell**. Six records become four people, and the
-   Engineering request has one candidate. Remove the link to reverse it.
-3. **Assignment queue:** pick an eligible assignee. The database rejects a
-   cross-team assignment even when it comes from another caller.
-4. Import a CSV roster (`name,email,team`, optional `id`) or requests
-   (`id,title,team`). Map differently named columns in the dialog. A Translation
-   member fills the uncovered request. Examples are in `samples/`.
-5. **Public handoff:** export open requests and assigned source display names
-   as CSV or structured JSON. Email/source fields, closed work, and unused names
-   are absent. **Full backup** separately includes all private data.
+Relay Desk uses the same library to reconcile CSV rosters, enumerate team-compatible
+assignees and export a public handoff. It remains included; its application
+policies are distinct from CatDB's generic operations.
 
-Source name + ID identify roster rows. Reimport updates them atomically. Optional
-replacement removes absent rows unless assignments or links still reference
-them: unassign/unlink first. Equal email addresses are an application policy;
-review collisions. Display names prefer the longest source name; assignments
-retain a particular team-compatible source record. Requests support creation,
-editing, closing, reopening, deletion, search, and team filters.
+![Actual Relay Desk reference application](site/assets/relay-desk.jpg)
+
+Run `Start Relay Desk.cmd`, or `relay-desk.exe desk.catdb --demo`.
+See the [Relay Desk guide](docs/guide.ja.md), [reference model](reference/src/Relay/Model.hs)
+and `samples/` CSV files. Equal normalized emails and explicit links are this
+application's identification policy; Π enumerates compatible candidates, without
+optimizing or choosing assignments. Sharing excludes fields through explicit
+view and reachability definitions; Δ alone is not a privacy filter.
 
 ## What the category theory buys
 
@@ -108,8 +126,8 @@ cabal run catdb -- query tasks.catdb delta examples/public-view.json cards.catdb
 
 ## Build
 
-Release baseline: GHC 9.6.7, Cabal 3.12. Windows: `./build.ps1 -Test`.
-The result is `build/relay-desk.exe`, `build/catdb.exe`, and `build/relay-web/`.
+Native release baseline: GHC 9.6.7. Windows: `./build-frontend.ps1`, then `./build.ps1 -Test` (use `-Compiler` when GHC 9.6.7 is not on PATH).
+The result includes `build/catdb-studio.exe`, `build/studio-web/`, the CLI and Relay Desk. The frontend uses Miso 1.12.0.0 and the pinned Nix/GHC-WASM shell; the native build never imports Miso.
 With Cabal on Linux or Windows:
 
 ```sh

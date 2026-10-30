@@ -1,6 +1,7 @@
 param(
   [switch]$Test,
   [switch]$Offline,
+  [string]$Compiler = 'ghc',
   [string]$BuildDir = (Join-Path $PSScriptRoot 'build')
 )
 $ErrorActionPreference = 'Stop'
@@ -25,7 +26,7 @@ try {
   $localConfigText += "`nbuild-summary: " + (Join-Path $BuildDir 'logs\build.log') + "`n"
   [IO.File]::WriteAllText($localConfig, $localConfigText)
   $globalArgs = @('--config-file=' + $localConfig)
-  $buildArgs = @('--builddir=' + (Join-Path $BuildDir 'dist'))
+  $buildArgs = @(('--builddir=' + (Join-Path $BuildDir 'dist')), ('--with-compiler=' + $Compiler))
   if ($Offline) { $buildArgs += '--offline' }
   & cabal @globalArgs build all @buildArgs
   if ($LASTEXITCODE -ne 0) { throw 'cabal build failed' }
@@ -34,7 +35,7 @@ try {
     & cabal @globalArgs test laws @buildArgs --test-show-details=direct "--test-options=$testDirectory"
     if ($LASTEXITCODE -ne 0) { throw 'cabal test failed' }
   }
-  foreach ($target in @('catdb', 'relay-desk')) {
+  foreach ($target in @('catdb', 'relay-desk', 'catdb-studio')) {
     $executablePath = & cabal @globalArgs list-bin "exe:$target" @buildArgs
     if ($LASTEXITCODE -ne 0) { throw 'cabal list-bin failed' }
     Copy-Item -LiteralPath $executablePath.Trim() -Destination (Join-Path $BuildDir "$target.exe") -Force
@@ -44,6 +45,16 @@ try {
   New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
   Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'reference/web') -File | ForEach-Object {
     Copy-Item -LiteralPath $_.FullName -Destination $assetDir -Force
+  }
+  $studioWeb = Join-Path $PSScriptRoot 'studio\web'
+  if (Test-Path -LiteralPath (Join-Path $studioWeb 'studio-gui.wasm')) {
+    $studioTarget = Join-Path $BuildDir 'studio-web'
+    New-Item -ItemType Directory -Force -Path $studioTarget | Out-Null
+    Get-ChildItem -LiteralPath $studioWeb | ForEach-Object {
+      Copy-Item -LiteralPath $_.FullName -Destination $studioTarget -Recurse -Force
+    }
+  } else {
+    Write-Output 'Native Studio built. Run build-frontend.ps1 for its Miso/WASM assets.'
   }
 } finally {
   if ($localConfig -and (Test-Path -LiteralPath $localConfig)) {

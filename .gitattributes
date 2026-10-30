@@ -8,4 +8,9 @@
 *.yml text eol=lf
 *.py text eol=lf
 *.cmd text eol=crlf
+*.sh text eol=lf
+*.nix text eol=lf
+*.cabal text eol=lf
+*.project text eol=lf
+*.lock text eol=lf
 *.jpg binary

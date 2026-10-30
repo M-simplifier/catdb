@@ -1,7 +1,33 @@
 # Verification scope
 
-Release baseline: Windows, GHC 9.6.7, Cabal 3.12.1.0. CI also builds on Linux.
+Native release baseline: Windows, GHC 9.6.7; Studio was built with Cabal 3.18.2.0.
+CI also builds the native package on Linux.
 This records bounded evidence, not a formal proof or production certification.
+
+## Studio 0.3
+
+The native Servant/Warp executable and real Miso 1.12.0.0 frontend compile.
+The pinned Nix shell resolves GHC-WASM 9.14.1.20260330 (GHC source commit
+05e0ef08e100cf3bd2150adcf8e53ba9ad30519a). The native CatDB library APIs and
+store frame protocol are unchanged.
+
+`test/studio_http.py EXECUTABLE COMPILED-WEB [LEGACY-FILE]` launches the real
+server and checks local-session/origin protection, compiled WASM serving,
+invalid reading-note draft rejection without a version/native-backup/file-size
+change, valid atomic repair, immutable old versions, stale/recomputed views,
+mapping validation, distinct Delta cards, Sigma classes, Pi compatible families,
+empty Pi families, GeneratedRef witnesses, exact original-revision references,
+definition export, native backup, close/reopen, explicit legacy adoption and
+a custom Team→Office schema with deletion constraints. A real bounded Pi search
+was cancelled through a concurrent HTTP request; another exceeded its operation
+budget. Both saved no partial result. Caption tests follow actual PullRef and
+GeneratedRef provenance; unrelated custom IDs receive no fixture caption.
+
+The existing laws/Relay/native-memory/storage suite passed after integration.
+Live browser acceptance of the running HTTP app covered split/merged endpoints,
+disabled invalid apply, atomic apply and the Delta/source-revision journey.
+The public site contains an explicitly labelled diagram and a separately labelled
+actual Relay Desk screenshot; no Studio screenshot is fabricated.
 
 The law suite enumerates component functions independently of the migration
 algorithm, keeps the natural transformations, and checks both directions of

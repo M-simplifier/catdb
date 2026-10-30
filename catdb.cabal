@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name: catdb
-version: 0.2.0.0
+version: 0.3.0.0
 synopsis: A small persistent database of finite functors
 build-type: Simple
 license: MIT
@@ -12,12 +12,22 @@ bug-reports: https://github.com/M-simplifier/catdb/issues
 category: Database
 tested-with: GHC ==9.6.7
 description: A proof of concept embedded database with exact finite categorical
-  schemas, functorial data migration, native file persistence, and Relay Desk,
-  a practical local roster reconciliation and assignment application.
+  schemas, functorial data migration, native catalogs and file persistence.
+  CatDB Studio is its local Miso/WASM interface. Relay Desk is an application example.
 extra-source-files: README.md, CONTRIBUTING.md, STATUS.md, docs/*.md,
-  reference/web/*, samples/*.csv, examples/*.json, test/*.py, test/*.ps1,
+  reference/web/*.html, reference/web/*.css, reference/web/*.js,
+  samples/*.csv, examples/*.json, test/*.py, test/*.ps1,
   build.ps1, site/*.html, site/*.css, site/*.js, site/*.svg, site/assets/*.jpg,
-  test/negative/*.hs
+  build-frontend.ps1, package-studio.ps1, "Start CatDB Studio.cmd", "Start Relay Desk.cmd", THIRD_PARTY_NOTICES.md,
+  studio/frontend/*.cabal, studio/frontend/cabal.project, studio/frontend/flake.nix,
+  studio/frontend/flake.lock, studio/frontend/build.sh, studio/frontend/app/*.hs,
+  studio/frontend/static/*.html, studio/frontend/static/*.css, studio/frontend/static/*.js,
+  studio/frontend/static/*.svg, studio/frontend/static/vendor/wasi/*.js,
+  studio/frontend/static/licenses/browser-wasi-shim-LICENSE-APACHE,
+  studio/frontend/static/licenses/browser-wasi-shim-LICENSE-MIT,
+  studio/frontend/static/licenses/miso-LICENSE,
+  studio/frontend/static/licenses/*.txt, studio/frontend/static/licenses/*.json,
+  scripts/*.py
 
 source-repository head
   type: git
@@ -59,6 +69,25 @@ executable embedded-example
   hs-source-dirs: examples
   main-is: Embedded.hs
   build-depends: catdb
+
+executable studio-export-example
+  import: settings
+  hs-source-dirs: examples
+  main-is: StudioExport.hs
+  build-depends: catdb
+
+executable catdb-studio
+  import: settings
+  hs-source-dirs: studio/server, studio/shared
+  main-is: Main.hs
+  other-modules: Studio.Core, Studio.Runtime, Studio.Server, Studio.Wire
+  build-depends: catdb, directory, filepath, async, process, network,
+    servant ==0.20.3.0, servant-server ==0.20.3.0,
+    wai >=3.2 && <3.3, warp ==3.4.12, http-types >=0.12 && <0.13
+  c-sources: studio/cbits/random.c
+  if os(windows)
+    extra-libraries: bcrypt
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N2
 
 test-suite laws
   import: settings
