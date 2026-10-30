@@ -38,10 +38,12 @@ def run(executable, assets, legacy=None, verify_frontend=True):
             assert url, "Studio did not announce its HTTP endpoint"
             base, token = url.split("#", 1)
 
-            def http(path, data=None, *, session=True, origin=None):
+            def http(path, data=None, *, session=True, origin=None, extra=None):
                 headers = {"X-CatDB-Session": token} if session else {}
                 if origin:
                     headers["Origin"] = origin
+                if extra:
+                    headers.update(extra)
                 if data is not None:
                     headers["Content-Type"] = "application/json"
                     data = json.dumps(data, ensure_ascii=False).encode()
@@ -84,6 +86,13 @@ def run(executable, assets, legacy=None, verify_frontend=True):
 
             assert http("api/state", session=False)[0] == 403
             assert http("api/state", origin="https://example.invalid")[0] == 403
+            navigation={"Sec-Fetch-Site":"cross-site","Sec-Fetch-Mode":"navigate","Sec-Fetch-Dest":"document"}
+            assert http("",session=False,extra=navigation)[0] == 200
+            assert http("index.html",session=False,origin="https://example.invalid",extra=navigation)[0] == 200
+            assert http("",session=False,extra=dict(navigation,Host="example.invalid"))[0] == 403
+            assert http("api/state",extra=navigation)[0] == 403
+            assert http("api/command",{"tag":"cancel"},extra=navigation)[0] == 403
+            assert http("studio-gui.wasm",session=False,extra=navigation)[0] == 403
             if verify_frontend:
                 status, headers, body = http("studio-gui.wasm", session=False)
                 assert status == 200 and body[:4] == b"\0asm", "Compiled Miso WASM is not being served"

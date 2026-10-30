@@ -128,8 +128,10 @@ coursePanel m=case fieldCourse m of
     ,case guideExercise m of
       Just "qualification" | dirty m -> p "佐藤のセンサー資格を、まだ保存していない下書きに追加しました。上の「下書きを確認」→「まとめて適用」の順に進みます。"
       Just "broken" | dirty m -> box "guide-repair"
-        [p "製品と契約の道が食い違う下書きです。「下書きを確認」で拒否されることを確かめてください。次のボタンで、契約の付け替えも同じ下書きに追加します。"
-        ,btn m "契約も、その製品に合う契約へ変更する" GuideRepair]
+        (if localProblems (currentSchema m) (workingData m)>0
+          then [p "製品と契約の道が食い違う下書きです。「下書きを確認」で拒否されることを確かめてください。次のボタンで、契約の付け替えも同じ下書きに追加します。"
+            ,button "btn" "契約も、その製品に合う契約へ変更する" GuideRepair (isPending m)]
+          else [p "製品と契約の変更が、同じ下書きにそろいました。まだ保存していません。「下書きを確認」してから、まとめて適用してください。"])
       _ -> case snapshotSchemaKey <$> snapshot m of
         Just "fs:normalized"->p "同じ対応キーの顧客がまとまり、契約や依頼は残っています。顧客の由来を見たら、道順に戻ってΔを実行します。"
         Just "fs:operations"->p "依頼の tr は、元の顧客を経由して読んだ地域です。次にΠで依頼・資格・稼働枠の条件をそろえます。"

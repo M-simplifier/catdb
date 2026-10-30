@@ -47,12 +47,14 @@ secure port token next request respond = do
       originOK = maybe True (`elem` origins) (lookup hOrigin (requestHeaders request))
       siteOK = lookup "Sec-Fetch-Site" (requestHeaders request) /= Just "cross-site"
       api = case pathInfo request of "api":_ -> True; _ -> False
+      entryDocument = requestMethod request `elem` [methodGet,methodHead]
+        && pathInfo request `elem` [[],["index.html"]]
       authenticated = lookup "X-CatDB-Session" (requestHeaders request) == Just token
       mutation = requestMethod request /= methodGet && requestMethod request /= methodHead
       reject status message = respond (responseLBS status ((hContentType,"application/json"):securityHeaders)
         (encode (WReply False message (Just (WProblem "LocalSessionRequired" message "")) Nothing Nothing Nothing)))
       response = respond . mapResponseHeaders (securityHeaders ++)
-  if not (hostOK && originOK && siteOK) then reject status403 "この端末のCatDB Studioから操作してください。"
+  if not hostOK || (not entryDocument && not (originOK && siteOK)) then reject status403 "この端末のCatDB Studioから操作してください。"
     else if api && not authenticated then reject status403 "起動時に表示されたURLからCatDB Studioを開いてください。"
     else if mutation then do
       body <- readBoundedBody request (4*1024*1024)
