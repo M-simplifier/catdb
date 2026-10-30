@@ -19,6 +19,7 @@ extra-source-files: README.md, CONTRIBUTING.md, STATUS.md, docs/*.md,
   samples/*.csv, examples/*.json, test/*.py, test/*.ps1,
   build.ps1, site/*.html, site/*.css, site/*.js, site/*.svg, site/assets/*.jpg,
   build-frontend.ps1, package-studio.ps1, "Start CatDB Studio.cmd", "Start Relay Desk.cmd", THIRD_PARTY_NOTICES.md,
+  "Start Field Service.cmd", "Start Completed Example.cmd",
   studio/frontend/*.cabal, studio/frontend/cabal.project, studio/frontend/flake.nix,
   studio/frontend/flake.lock, studio/frontend/build.sh, studio/frontend/app/*.hs,
   studio/frontend/static/*.html, studio/frontend/static/*.css, studio/frontend/static/*.js,
@@ -80,7 +81,7 @@ executable catdb-studio
   import: settings
   hs-source-dirs: studio/server, studio/shared
   main-is: Main.hs
-  other-modules: Studio.Core, Studio.Runtime, Studio.Server, Studio.Wire
+  other-modules: Studio.Core, Studio.Runtime, Studio.Server, Studio.Wire, Studio.FieldService
   build-depends: catdb, directory, filepath, async, process, network,
     servant ==0.20.3.0, servant-server ==0.20.3.0,
     wai >=3.2 && <3.3, warp ==3.4.12, http-types >=0.12 && <0.13

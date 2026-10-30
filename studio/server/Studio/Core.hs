@@ -15,6 +15,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import GHC.Generics (Generic)
 import Studio.Wire
+import qualified Studio.FieldService as FieldService
 
 data Failure = Engine C.Error | Catalog C.CatalogError | InvalidInput Text
   | StaleRevision Text Text | NoDatabase | LegacyReadOnly | OperationBusy
@@ -112,6 +113,7 @@ data Mutation
   | ApplyDraft Text Text WData Text | AdoptHead Text Text
   | RunView Text Text Text Text (Maybe Text) | Recompute Text
   | Generate Text Text Text Text
+  | FieldStage Text
   deriving (Eq, Show)
 instance FromJSON Request where
   parseJSON = withObject "Studio command" $ \v -> do
@@ -130,6 +132,7 @@ instance FromJSON Request where
       "run" -> Mutate <$> expected <*> (RunView <$> v .: "name" <*> v .: "operation" <*> v .: "mapping" <*> v .: "source" <*> v .:? "system")
       "recompute" -> Mutate <$> expected <*> (Recompute <$> v .: "name")
       "generate" -> Mutate <$> expected <*> (Generate <$> v .: "name" <*> v .: "source" <*> v .: "object" <*> v .: "record")
+      "fieldStage" -> Mutate <$> expected <*> (FieldStage <$> v .: "stage")
       "inspect" -> Inspect <$> v .: "source"
       "explain" -> Explain <$> v .: "ref"
       "backup" -> Backup <$> v .: "path"
@@ -144,6 +147,7 @@ fresh prefix c = choose (C.catalogRevision c + 1)
 
 prepare :: Mutation -> C.Catalog -> Either Failure (C.Catalog,Maybe C.InstanceRev)
 prepare mutation original = case mutation of
+  FieldStage stage -> catalog (FieldService.runStage stage original)
   NewSchema key wire -> do
     named key
     def <- fromSchema wire
@@ -251,9 +255,13 @@ captionEntries rev instanceValue c = evalState (forM (M.toList (C.sets (C.instan
               Nothing -> pure (case catMaybes [M.lookup a fixtureLabels | a <- C.directAnchors e] of [one] -> Just one; _ -> Nothing)
               Just (_,C.PullRef origin) -> labelFor origin
               Just (_,C.GeneratedRef origin) -> labelFor origin
-              Just (_,C.SigmaClass origins) -> summary "件の由来" (map C.transportRow origins)
+              Just (_,C.SigmaClass origins) -> case fieldIdentity row origins of
+                Just source->pure (Just (C.elementName (C.rowElement source)))
+                Nothing->summary "件の由来" (map C.transportRow origins)
               Just (_,C.PiFamily []) -> pure (Just "空の組")
-              Just (_,C.PiFamily origins) -> summary "成分の組" (map C.memberRow origins)
+              Just (_,C.PiFamily origins) -> case fieldMember row origins of
+                Just source->labelFor source
+                Nothing->summary "成分の組" (map C.memberRow origins)
           modify (M.insert row caption)
           pure caption
     summary unit origins = do
@@ -261,6 +269,14 @@ captionEntries rev instanceValue c = evalState (forM (M.toList (C.sets (C.instan
         name <- labelFor row
         pure (maybe (C.objectName (C.rowObject row)<>"/"<>C.elementName (C.rowElement row)) id name)
       pure (Just (T.pack (show (length origins))<>unit<>" · "<>T.intercalate " / " names<>(if length origins>3 then " / …" else "")))
+    fieldRow row=maybe False (T.isPrefixOf "fs:" . C.unSchemaKey . fst) (M.lookup (C.rowRevision row) (C.catalogInstances c))
+    fieldIdentity row origins
+      | not (fieldRow row)=Nothing
+      | otherwise=case [C.transportRow origin | origin<-origins,null (C.steps (C.transportPath origin))
+          ,C.rowObject (C.transportRow origin)==(if C.rowObject row=="顧客" then "顧客キー" else C.rowObject row)] of [one]->Just one; _->Nothing
+    fieldMember row origins
+      | not (fieldRow row)=Nothing
+      | otherwise=case [C.memberRow member | member<-origins,C.memberObject member==C.rowObject row,null (C.steps (C.memberPath member))] of [one]->Just one; _->Nothing
 
 explanationWire :: WRef -> C.Catalog -> Either Failure WExplanation
 explanationWire (WRef r o x) c = do
@@ -290,9 +306,10 @@ catalogWire version path busy c = WState version path
   [WView (C.unViewKey k) mode mapping (C.unInstanceRev (C.derivationInput d)) (C.unInstanceRev (C.derivationOutput d))
     (case C.adoptionBinding adoption of C.Active sys -> Just (C.unSystemKey sys); _ -> Nothing)
     (case C.viewFreshness C.defaultBudget k c of Right C.Current -> "current"; Right C.PinnedSnapshot -> "pinned"; Right (C.Stale _ _) -> "stale"; Left _ -> "unavailable")
+    (Just (C.unInstanceRev (C.adoptionSourceRevision adoption)))
     | (k,adoption) <- M.toList (C.catalogViews c),Just d <- [M.lookup (C.adoptionDerivation adoption) (C.catalogDerivations c)]
     ,let (mode,mapping) = case C.derivationSpec d of C.PullAlong m -> ("delta",C.unMappingKey m); C.PushAlong m -> ("sigma",C.unMappingKey m); C.JoinAlong m -> ("pi",C.unMappingKey m); C.Generate _ -> ("generated","")]
-  Nothing busy
+  Nothing busy (FieldService.status c)
   where derived = S.fromList (map C.derivationOutput (M.elems (C.catalogDerivations c)))
 
 exportCatalog :: C.Catalog -> Value
@@ -307,7 +324,8 @@ initialCatalog preset = case preset of
   "blank" -> pure C.emptyCatalog
   "reading" -> readingCatalog
   "families" -> familyCatalog
-  _ -> Left (InvalidInput "見本は reading / families / blank から選んでください。")
+  "field-service" -> catalog FieldService.seed
+  _ -> Left (InvalidInput "見本は field-service / reading / families / blank から選んでください。")
 
 readingCatalog :: Either Failure C.Catalog
 readingCatalog = do

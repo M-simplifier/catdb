@@ -12,6 +12,8 @@
 !/build-frontend.ps1
 !/package-studio.ps1
 !/Start CatDB Studio.cmd
+!/Start Field Service.cmd
+!/Start Completed Example.cmd
 !/THIRD_PARTY_NOTICES.md
 !/scripts/
 !/scripts/*.py

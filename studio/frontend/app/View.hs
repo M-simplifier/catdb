@@ -9,6 +9,7 @@ import qualified Miso.Html.Property as P
 import Miso.String (ms,fromMisoString)
 import Model
 import Studio.Wire
+import Course (coursePage,coursePanel,courseRail,courseOrigins)
 
 type V = View Model Action
 empty :: V
@@ -39,7 +40,7 @@ mathNote m value = if math m then divc "mathbox" [txt value] else empty
 
 viewModel :: props -> Model -> V
 viewModel _ m = divc ("app"<>if math m then " math" else "")
-  [topbar m,rail m,H.main_ [P.class_ "main"] [feedbackView m,busyView m,mainView m],H.aside_ [P.class_ "insp",P.aria_ "label" "選んだ行の道と由来"] [inspector m],confirmView m]
+  [topbar m,rail m,H.main_ [P.class_ "main"] [feedbackView m,busyView m,if page m/=Course then coursePanel m else empty,mainView m],H.aside_ [P.class_ "insp",P.aria_ "label" "選んだ行の道と由来"] [courseOrigins m,inspector m],confirmView m]
 
 topbar :: Model -> V
 topbar m = H.header_ [P.class_ "top"]
@@ -59,8 +60,13 @@ topbar m = H.header_ [P.class_ "top"]
         lastPart value = case reverse (T.splitOn "/" value) of x:_ -> x; [] -> value
 
 rail :: Model -> V
-rail m = H.nav_ [P.class_ "rail",P.aria_ "label" "データベース"]
-  ([divc "rh" [txt "編集するデータ"]]
+rail m | isJust (fieldCourse m) && not (guideTools m)=courseRail m
+       | otherwise=fullRail m
+fullRail :: Model -> V
+fullRail m = H.nav_ [P.class_ "rail",P.aria_ "label" "データベース"]
+  ([if isJust (fieldCourse m) then button "ri on" "現場サービスの体験へ" (Navigate Course) False else empty
+   ,if isJust (fieldCourse m) then button "ri" "体験用の道具に戻す" ToggleGuideTools False else empty
+   ,divc "rh" [txt "編集するデータ"]]
   ++ [button ("ri"<>if snapshotRevisionOf m==rev && selectedView m==Nothing then " on" else "") (name<>"  ·  "<>rev)
         (Guard (OpenRevision rev Nothing Nothing)) (isPending m) | (name,rev) <- maybe [] stateHeads (snapshotState m)]
   ++ [divc "rh" [txt (if maybe False snapshotDerived (snapshot m) then "派生したレコード" else "レコード")]]
@@ -97,6 +103,7 @@ mainView :: Model -> V
 mainView m
   | blank (token m) = divc "welcome" [heading "この端末で起動" "CatDB Studioを開く" "起動時のウィンドウに表示されたURLから開いてください。URLには、この起動だけに使う接続情報が含まれます。"]
   | otherwise = case page m of
+    Course -> coursePage m
     Files -> filesPage m
     SchemaEditor -> schemaEditor m
     MappingEditor -> mappingEditor m
@@ -115,7 +122,7 @@ filesPage m = divc "page-stack"
     [H.h2_ [] [txt "新しく作る・開く"],field "ファイル名、またはフルパス" (input "例：notes.catdb または C:\\Users\\…\\notes.catdb" (fileInput m) (Edit FilePathField))
     ,hint "ファイル名だけなら、起動ウィンドウに表示されたdataフォルダーに保存します。既存のファイルは上書きしません。"
     ,field "新しく作るときの中身" (select "中身" (presetInput m) (Edit PresetField)
-      [("reading","読書メモ — 二つの道と Δ の見本"),("families","対応の見本 — Σ の同一視と Π の組"),("blank","空のデータベース — 自分のスキーマを作る")])
+      [("field-service","現場サービス — 原本をそろえ、派遣候補を計算する"),("reading","読書メモ — 二つの道と Δ の見本"),("families","対応の見本 — Σ の同一視と Π の組"),("blank","空のデータベース — 自分のスキーマを作る")])
     ,divc "form-actions" [button "btn primary" "新しく作る" (Guard CreateDatabase) (isPending m),button "btn" "既存ファイルを開く" (Guard OpenDatabase) (isPending m)]]
   ,case snapshotState m >>= stateLegacy of
     Nothing -> empty
@@ -172,7 +179,9 @@ viewBanner m = case selectedView m >>= \key -> snapshotState m >>= find ((==key)
   Nothing -> empty
   Just view -> divc ("snap"<>if viewFreshness view=="stale" then " stale" else "")
     [txt (viewKey view<>" · 元の "<>viewInput view<>" から計算"<>if viewFreshness view=="stale" then " · 元の確定版が進みました。再計算するまで、この結果は計算に使った版のままです" else if viewFreshness view=="pinned" then " · この版に固定" else " · 最新")
-    ,button "btn small" "再計算する" (Guard (RecomputeView (viewKey view))) (isPending m)]
+    ,if isJust (fieldCourse m) && viewKey view `elem` ["1 顧客をそろえる","2 派遣の形で読む","3 担当できる組"]
+      then button "btn small" "三段を再計算" (Guard (FieldStage "all")) (isPending m)
+      else button "btn small" "再計算する" (Guard (RecomputeView (viewKey view))) (isPending m)]
 
 structurePage :: Model -> V
 structurePage m = divc "page-stack"

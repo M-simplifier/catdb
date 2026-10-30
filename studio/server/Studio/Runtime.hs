@@ -37,11 +37,11 @@ version s = T.pack (show (generation s)) <> ":" <> maybe "closed" (maybe "legacy
 
 sessionState :: Session -> WState
 sessionState s = case opened s of
-  Nothing -> WState (version s) Nothing [] [] [] [] [] Nothing (isJust (running s))
+  Nothing -> WState (version s) Nothing [] [] [] [] [] Nothing (isJust (running s)) Nothing
   Just o -> case openedCatalog o of
     Just c -> catalogWire (version s) (Just (T.pack (openedPath o))) (isJust (running s)) c
     Nothing -> WState (version s) (Just (T.pack (openedPath o))) [] [] [] [] []
-      (fmap (\i -> let def = C.definition (C.instanceSchema i) in WSnapshot "legacy" "legacy" (toSchema def) (toData def (C.instanceData i)) False []) (openedLegacy o)) False
+      (fmap (\i -> let def = C.definition (C.instanceSchema i) in WSnapshot "legacy" "legacy" (toSchema def) (toData def (C.instanceData i)) False []) (openedLegacy o)) False Nothing
 
 readState :: Runtime -> IO WState
 readState (Runtime _ cell) = withMVar cell (pure . sessionState)

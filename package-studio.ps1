@@ -4,8 +4,11 @@ param(
   [string]$OutputDirectory=(Join-Path $PSScriptRoot 'release'),
   [Parameter(Mandatory=$true)][string]$GhcSourceArchive,
   [string]$CompilerDirectory='C:\ghcup\ghc\9.6.7',
-  [string]$HackageCache='C:\cabal\packages\hackage.haskell.org'
+  [string]$HackageCache='C:\cabal\packages\hackage.haskell.org',
+  [string]$FieldServiceSamples=''
 )
 $ErrorActionPreference='Stop'
-& python (Join-Path $PSScriptRoot 'scripts\package_studio.py') --repo $PSScriptRoot --build $NativeBuildDirectory --web $WebDirectory --output $OutputDirectory --ghc $CompilerDirectory --ghc-source $GhcSourceArchive --cache $HackageCache
+$packageArgs=@('--repo',$PSScriptRoot,'--build',$NativeBuildDirectory,'--web',$WebDirectory,'--output',$OutputDirectory,'--ghc',$CompilerDirectory,'--ghc-source',$GhcSourceArchive,'--cache',$HackageCache)
+if($FieldServiceSamples){$packageArgs+=@('--field-service-samples',$FieldServiceSamples)}
+& python (Join-Path $PSScriptRoot 'scripts\package_studio.py') @packageArgs
 if($LASTEXITCODE -ne 0){throw 'Studio packaging failed. Existing packages are never overwritten.'}

@@ -7,12 +7,13 @@ import Miso.String (MisoString, fromMisoString, ms)
 import Studio.Wire
 
 type S = MisoString
-data Page = Records | Rules | Structure | SchemaEditor | Mappings | MappingEditor | ViewBuilder | Files | History deriving (Eq, Show)
+data Page = Course | Records | Rules | Structure | SchemaEditor | Mappings | MappingEditor | ViewBuilder | Files | History deriving (Eq, Show)
 data Field = FilePathField | PresetField | BackupField | ReasonField | SearchField | NewRecordField
   | SchemaNameField | NewObjectField | ArrowNameField | ArrowFromField | ArrowToField | EquationStartField
   | MappingNameField | ViewNameField | OperationField | ViewSourceField | AdoptNameField
   deriving (Eq,Show)
-data Purpose = Inspecting S (Maybe WRef) (Maybe S) | Previewing S WData | Applying | SavingSchema | SavingMapping | ComputingView | ChangingFile | Other
+data Purpose = Inspecting S (Maybe WRef) (Maybe S) | GuideInspecting S (Maybe S) | GuideDrafting S | FieldComputing S
+  | Previewing S WData | Applying | SavingSchema | SavingMapping | ComputingView | ChangingFile | Other
   deriving (Eq, Show)
 data Action
   = Initialize | Initialized S | Poll | GotState WState | NetworkFailed S
@@ -29,6 +30,7 @@ data Action
   | ChooseViewMapping S | RunView | RecomputeView S | GeneratePart | AdoptRevision
   | CreateDatabase | OpenDatabase | CloseDatabase | AdoptLegacy | BackupDatabase | Download S | Downloaded S
   | Completed Int Purpose WReply | CommandFailed Int S | CancelWork | CancelledReply WReply
+  | ToggleGuideTools | GuideOpenSource S (Maybe S) | GuideMakeDraft S | GuideRepair | FieldStage S
   deriving (Eq, Show)
 
 data Model = Model
@@ -43,6 +45,7 @@ data Model = Model
   , arrowNameInput :: S, arrowFromInput :: S, arrowToInput :: S, equationStartInput :: S
   , equationLeftInput :: [S], equationRightInput :: [S], mappingDraft :: WMapping, selectedMappingArrow :: S
   , viewNameInput :: S, operationInput :: S, viewSourceInput :: S, viewMappingInput :: S, adoptNameInput :: S
+  , guideTools :: Bool, guideExercise :: Maybe S
   } deriving (Eq,Show)
 
 initialModel :: Model
@@ -54,6 +57,7 @@ initialModel = Model
   , insertTargets=[],schemaNameInput="",schemaDraft=WSchema [] [] [],newObjectInput="",arrowNameInput="",arrowFromInput="",arrowToInput=""
   , equationStartInput="",equationLeftInput=[],equationRightInput=[],mappingDraft=WMapping "" "" "" [] [],selectedMappingArrow=""
   , viewNameInput="",operationInput="delta",viewSourceInput="",viewMappingInput="",adoptNameInput=""
+  , guideTools=False,guideExercise=Nothing
   }
 
 trim :: S -> S
@@ -148,7 +152,7 @@ acceptSnapshot focus view snap m = m
 editField :: Field -> S -> Model -> Model
 editField field value m = case field of
   FilePathField -> m {fileInput=value}
-  PresetField -> m {presetInput=value,fileInput=case value of "reading" -> "読書メモ.catdb"; "families" -> "対応の見本.catdb"; _ -> "新しいデータベース.catdb"}
+  PresetField -> m {presetInput=value,fileInput=case value of "reading" -> "読書メモ.catdb"; "families" -> "対応の見本.catdb"; "field-service" -> "現場サービス.catdb"; _ -> "新しいデータベース.catdb"}
   BackupField -> m {backupInput=value}
   ReasonField -> m {reasonInput=value}
   SearchField -> m {search=value}
@@ -182,7 +186,17 @@ eligibleMappings m = case snapshotState m of
     Just source -> filter (\f -> (if operationInput m=="delta" then mappingTo f else mappingFrom f)==revisionSchema source) (stateMappings state)
 
 caption :: Model -> S -> S -> S
-caption m object key = fromMaybe key $ do
+caption m object key = fromMaybe fallback $ do
   snap <- snapshot m
-  labels <- lookup object (snapshotLabels snap)
-  lookup key labels
+  course <- fieldCourse m
+  chosen <- find ((==WRef (snapshotRevision snap) object key) . dispatchRow) (concatMap courseRunRows (courseRuns course))
+  pure (dispatchTicket chosen<>" · "<>dispatchEngineer chosen)
+  where fallback=fromMaybe key $ do snap<-snapshot m; labels<-lookup object (snapshotLabels snap); lookup key labels
+
+fieldCourse :: Model -> Maybe WCourse
+fieldCourse m=snapshotState m >>= stateCourse
+fieldStageName :: Model -> S
+fieldStageName m=case snapshotSchemaKey <$> snapshot m of
+  Just "fs:raw"->"原本"; Just "fs:normalized"->"Σ 顧客をそろえる"; Just "fs:operations"->"Δ 派遣の形で読む"; Just "fs:candidates"->"Π 担当できる組"; _->""
+fieldView :: S -> Model -> Maybe WView
+fieldView name m=snapshotState m >>= find ((==name) . viewKey) . stateViews

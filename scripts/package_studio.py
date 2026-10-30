@@ -23,13 +23,15 @@ def main():
     parser.add_argument("--ghc", type=pathlib.Path, required=True)
     parser.add_argument("--ghc-source", type=pathlib.Path, required=True)
     parser.add_argument("--cache", type=pathlib.Path, required=True)
+    parser.add_argument("--field-service-samples", type=pathlib.Path)
     args = parser.parse_args()
     repo, build, web = args.repo.resolve(), args.build.resolve(), args.web.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    stage = output / f"catdb-{VERSION}-windows"
-    binary_zip = output / f"catdb-{VERSION}-windows.zip"
-    source_zip = output / f"catdb-{VERSION}-corresponding-source.zip"
+    field_service=args.field_service_samples is not None
+    stage = output / ("app" if field_service else f"catdb-{VERSION}-windows")
+    binary_zip = output / ("catdb-field-service-windows.zip" if field_service else f"catdb-{VERSION}-windows.zip")
+    source_zip = output / ("catdb-field-service-corresponding-source.zip" if field_service else f"catdb-{VERSION}-corresponding-source.zip")
     if any(p.exists() for p in (stage, binary_zip, source_zip)):
         raise SystemExit("Use a fresh output directory; an existing package is never replaced.")
     if (web / "studio-gui.wasm").read_bytes()[:4] != b"\0asm":
@@ -48,7 +50,7 @@ def main():
         seen.add(key)
         for dep in units[key].get("depends", []):
             visit(dep)
-    executables = ["catdb-studio", "catdb", "relay-desk"]
+    executables = ["catdb-studio"] if field_service else ["catdb-studio", "catdb", "relay-desk"]
     for p in units.values():
         if p["pkg-name"] == "catdb" and p.get("component-name") in ["exe:"+exe for exe in executables]:
             visit(p["id"])
@@ -107,10 +109,16 @@ def main():
         if strip:
             subprocess.run([strip, str(stage / (exe+".exe"))], check=True)
     shutil.copytree(web, stage / "studio-web")
-    shutil.copytree(repo / "reference/web", stage / "relay-web")
-    shutil.copytree(repo / "samples", stage / "samples")
+    if not field_service:
+        shutil.copytree(repo / "reference/web", stage / "relay-web")
+        shutil.copytree(repo / "samples", stage / "samples")
+    else:
+        (stage/"samples").mkdir()
+        for sample in ["field-service-source.catdb","field-service-complete.catdb"]:
+            shutil.copy2(args.field_service_samples/sample,stage/"samples"/sample)
     shutil.copytree(repo / "docs", stage / "docs")
-    for name in ["LICENSE", "README.md", "STATUS.md", "THIRD_PARTY_NOTICES.md", "Start CatDB Studio.cmd", "Start Relay Desk.cmd"]:
+    launchers=["Start Field Service.cmd","Start Completed Example.cmd"] if field_service else ["Start CatDB Studio.cmd","Start Relay Desk.cmd"]
+    for name in ["LICENSE", "README.md", "STATUS.md", "THIRD_PARTY_NOTICES.md"]+launchers:
         shutil.copy2(repo / name, stage / name)
     for name, body in gnu.items():
         (stage / name).write_bytes(body)
@@ -141,6 +149,33 @@ permitted. This is a working PoC with the limits in STATUS.md.
 
 https://github.com/M-simplifier/catdb
 Contributions through issues only; external PRs are not accepted.
+""",encoding="utf-8")
+    if field_service:
+        (stage/"README.txt").write_text("""CatDB Studio — Field Service hands-on development build
+
+Start Field Service.cmd opens the original fictional data and a guided course.
+It copies samples/field-service-source.catdb to data/field-service.catdb only
+when that working file does not exist. Existing work is never reseeded.
+Start Completed Example.cmd separately opens a saved, actually computed result.
+These launchers do not open or modify any other Studio installation or file.
+
+日本語: Start Field Service.cmdで開始してください。
+「体験の道順」で、原本の確認、Σ、Δ、Π、資格の追加、再計算、
+矛盾する下書きの拒否と修正、元の版への由来を実際に試せます。
+詳しい手順と初期データの結果: docs/field-service.ja.md
+
+All data is fictional. Human-readable names are record IDs, not scalar columns.
+The engine performs real migrations. Candidates are individually feasible
+triples, not a conflict-free assignment plan or optimizer. Same-name matching
+does not establish identity; explicit crosswalk keys are the given premise.
+Keep studio-web beside catdb-studio.exe. No compiler is needed to run.
+Ctrl+C or closing the console stops the local app. Applied revisions persist;
+browser drafts are not saved. Source commit is recorded in BUILD_INFO.txt.
+
+Original source: MIT. Dependencies retain their licenses; see notices and GNU
+license texts. The matching corresponding-source archive provides native/GMP
+sources and modification/recombination instructions. This development package
+does not create a new public tag or release.
 """,encoding="utf-8")
     with zipfile.ZipFile(binary_zip,"w",zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
         for file in sorted(stage.rglob("*")):

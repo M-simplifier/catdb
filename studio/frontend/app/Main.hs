@@ -2,7 +2,7 @@
 module Main where
 
 import Control.Concurrent (threadDelay)
-import Control.Monad (forever,unless,when)
+import Control.Monad (forever,unless,when,forM_)
 import Control.Monad.State.Strict (get,modify)
 import Data.List (find)
 import Data.Maybe (fromMaybe,listToMaybe,isJust)
@@ -43,12 +43,26 @@ handle = \case
         stateFailure
   GotState state -> do
     m <- get
-    modify (\x -> x {snapshotState=Just state,polling=False,validated=if currentVersion m==stateVersion state then validated x else Nothing})
+    modify (\x -> x {snapshotState=Just state,polling=False,validated=if currentVersion m==stateVersion state then validated x else Nothing
+      ,fileInput=if snapshot m==Nothing && isJust (stateCourse state) then fromMaybe (fileInput x) (statePath state) else fileInput x})
     when (snapshot m==Nothing && not (isPending m)) initializeSelection
   NetworkFailed msg -> modify (\m -> m {polling=False,feedback=Just msg})
   Navigate target -> modify (\m -> m {page=target,picker=Nothing,feedback=Nothing,failure=Nothing})
   Edit field value -> modify (editField field value)
   ToggleMath -> modify (\m -> m {math=not (math m)})
+  ToggleGuideTools -> modify (\m -> m {guideTools=not (guideTools m)})
+  GuideOpenSource object key -> do
+    m<-get
+    mapM_ (\course->send (GuideInspecting object key) ["tag" J..= ("inspect"::S),"source" J..= courseSource course]) (fieldCourse m)
+  GuideMakeDraft kind -> do
+    m<-get
+    mapM_ (\course->send (GuideDrafting kind) ["tag" J..= ("inspect"::S),"source" J..= courseSource course]) (fieldCourse m)
+  GuideRepair -> do
+    m<-get
+    let proposedProduct=fieldTarget (workingData m) "依頼" "依頼01｜青葉の定期点検" "ticketProduct"
+        contract=if proposedProduct==Just "センサー" then "契約02｜青葉・センサー" else "契約01｜青葉・ポンプ"
+    modify (changeData (setTarget "依頼" "依頼01｜青葉の定期点検" "ticketContract" contract))
+  FieldStage stage -> send (FieldComputing stage) ["tag" J..= ("fieldStage"::S),"stage" J..= stage]
   Dismiss -> modify (\m -> m {feedback=Nothing,failure=Nothing})
   Noop -> pure ()
   Guard next -> do
@@ -198,7 +212,29 @@ handle = \case
           Previewing ver dat -> modify (\x -> x {validated=if currentVersion x==ver && workingData x==dat then Just (ver,dat) else Nothing})
           Inspecting _ focus view -> do
             mapM_ (\snap -> modify (acceptSnapshot focus view snap)) (replySnapshot reply)
+            when (snapshot m==Nothing && isJust (fieldCourse m)) (modify (\x->x {page=Course}))
             explainFocused
+          GuideInspecting object key -> do
+            forM_ (replySnapshot reply) $ \snap -> do
+              let selected=case key of Just k->Just k; Nothing->recordId <$> listToMaybe (records (snapshotData snap) object)
+                  focus=fmap (WRef (snapshotRevision snap) object) selected
+              modify (acceptSnapshot focus Nothing snap)
+            explainFocused
+          GuideDrafting kind -> forM_ (replySnapshot reply) $ \snap -> do
+            let rev=snapshotRevision snap
+            if kind=="qualification" then do
+              let key="資格13｜佐藤・センサー"
+                  fields=[("qualificationEngineer","佐藤"),("qualificationProduct","センサー")]
+              if isJust (record (snapshotData snap) "資格" key)
+                then localFailure "この資格は既に原本にあります。別の行を普通の編集画面から追加できます。"
+                else do
+                  modify (acceptSnapshot (Just (WRef rev "資格" key)) Nothing snap)
+                  modify ((\x->x {guideExercise=Just kind}) . changeData (map (\t->if tableObject t=="資格" then t {tableRows=tableRows t++[WRow key fields]} else t)))
+            else do
+              let actualProduct=lastNode =<< either (const Nothing) Just (follow (snapshotSchema snap) (snapshotData snap) (WPath "依頼" ["ticketContract","contractProduct"]) "依頼01｜青葉の定期点検")
+                  proposed=if fmap snd actualProduct==Just "センサー" then "ポンプ" else "センサー"
+              modify (acceptSnapshot (Just (WRef rev "依頼" "依頼01｜青葉の定期点検")) Nothing snap)
+              modify ((\x->x {guideExercise=Just "broken"}) . changeData (setTarget "依頼" "依頼01｜青葉の定期点検" "ticketProduct" proposed))
           ChangingFile -> do
             modify (\x -> x {snapshot=Nothing,draft=Nothing,validated=Nothing,selectedView=Nothing,focusedRow=Nothing,explanation=Nothing,page=Files})
             initializeSelection
@@ -208,10 +244,13 @@ handle = \case
               Nothing -> pure ()
               Just snap -> do
                 state <- get
-                let view=case purpose of ComputingView -> snapshotState state >>= fmap viewKey . find ((==snapshotRevision snap) . viewOutput) . stateViews; _ -> Nothing
+                let view=case purpose of
+                      ComputingView -> snapshotState state >>= fmap viewKey . find ((==snapshotRevision snap) . viewOutput) . stateViews
+                      FieldComputing _ -> snapshotState state >>= fmap viewKey . find ((==snapshotRevision snap) . viewOutput) . stateViews
+                      _ -> Nothing
                 modify (acceptSnapshot Nothing view snap)
                 explainFocused
-            when (purpose==Applying) (modify (\x -> x {reasonInput=""}))
+            when (purpose==Applying) (modify (\x -> x {reasonInput="",guideExercise=Nothing,page=if isJust (fieldCourse x) then Course else page x}))
   CommandFailed number msg -> modify (\m -> if number==sequenceNumber m then m {pending=Nothing,feedback=Just msg} else m)
   CancelWork -> do
     m <- get

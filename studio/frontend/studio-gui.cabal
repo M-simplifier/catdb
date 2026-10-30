@@ -8,7 +8,7 @@ build-type: Simple
 executable studio-gui
   main-is: Main.hs
   hs-source-dirs: app, ../shared
-  other-modules: Studio.Wire, Model, View, Browser
+  other-modules: Studio.Wire, Model, View, Browser, Course
   build-depends: base >=4.18 && <5, miso ==1.12.0.0, containers, mtl, text
   default-language: GHC2021
   default-extensions: LambdaCase OverloadedStrings
