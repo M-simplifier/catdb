@@ -1,6 +1,6 @@
 # CatDB
 
-**Open your database. Follow the connections.**
+**Draw a schema. Follow the paths. Compute a new view.**
 
 CatDB is an embedded Haskell database of finite functors. Schemas describe
 objects, total arrows and equal paths. Checked schema mappings induce real
@@ -11,7 +11,7 @@ mappings and provenance live in one native `.catdb` file.
 
 [Website](https://m-simplifier.github.io/catdb/) ·
 [公式サイト（日本語）](https://m-simplifier.github.io/catdb/ja/) ·
-[Download v0.3.0-poc](https://github.com/M-simplifier/catdb/releases/tag/v0.3.0-poc) ·
+[Download v0.4.0-poc](https://github.com/M-simplifier/catdb/releases/tag/v0.4.0-poc) ·
 [Studio guide](docs/studio.md) · [Studioの使い方](docs/studio.ja.md) ·
 [Limits](STATUS.md) · [Mathematics](docs/mathematics.md) · [Native catalogs](docs/native-memory.md)
 
@@ -21,6 +21,11 @@ Extract the Windows package and double-click **Start CatDB Studio.cmd**.
 No compiler or separate database service is needed. The native application
 opens its Miso/WASM interface in your browser. Keep `studio-web` beside the
 executable. The interface is Japanese; the English guide covers the full entry.
+
+**Start Reading Notes.cmd** opens the fictional graph and path-equation example.
+**Start Mapping Example.cmd** opens the Σ/Π example. **Start Field Service.cmd**
+opens a guided course with real Σ→Δ→Π computations; **Start Completed Example.cmd**
+opens its saved computed result. Each launcher preserves an existing working copy.
 
 Create a reading-notes fixture, a merge/compatible-family fixture, or a blank
 database and your own finite acyclic schema. Open an existing `.catdb` by path.
@@ -40,7 +45,7 @@ Try the reading fixture:
    two refer to the same book. Follow a card's provenance into its source
    revision. Subsequent source edits mark the old view stale; recompute explicitly.
 
-The generic editors construct objects/arrows/equations, add/edit/delete records,
+Schema Canvas draws and constructs objects, generators and ordered path equations. Instance Lens focuses on one row and its finite neighborhood, with the existing search/table controls available below it. Migration Canvas shows object mappings and generator-to-path images before real computation. The editors add/edit/delete records,
 build checked mappings, and execute Δ, Σ and Π. Result rows expose PullRef,
 SigmaClass, PiFamily (including empty families) and GeneratedRef witnesses.
 Σ does not establish real-world identity; Π does not establish factual truth.

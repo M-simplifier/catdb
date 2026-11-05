@@ -142,10 +142,16 @@ def run(executable, assets, legacy=None, verify_frontend=True):
             print("PASS atomic repair, immutable source/result snapshots, stale marker and explicit recomputation")
 
             invalid_mapping = dict(key="broken", **{"from": "cards", "to": "reading"}, objects=[["Card", "Note"], ["Book", "Book"]], arrows=[["volume", dict(start="Note", steps=["quote"])]] )
+            before_check = http("api/backup")[2]
+            command("checkMapping", ok=False, mapping=invalid_mapping)
+            assert http("api/backup")[2] == before_check
             command("mapping", ok=False, mapping=invalid_mapping)
             direct_mapping = copy.deepcopy(invalid_mapping)
             direct_mapping["key"] = "direct"
             direct_mapping["arrows"][0][1]["steps"] = ["book"]
+            checked_version = state()["version"]
+            command("checkMapping", mapping=direct_mapping)
+            assert state()["version"] == checked_version and http("api/backup")[2] == before_check
             command("mapping", mapping=direct_mapping)
             direct = command("run", name="direct-cards", operation="delta", mapping="direct", source="r1")["snapshot"]
             assert direct["data"] == delta["data"]
@@ -167,6 +173,18 @@ def run(executable, assets, legacy=None, verify_frontend=True):
 
             # A schema that is unrelated to either fixture, with total references and deletion constraints.
             custom_schema = dict(objects=["Team", "Office"], arrows=[dict(id="office", **{"from":"Team", "to":"Office"})], equations=[])
+            before_check = http("api/backup")[2]
+            checked_version = state()["version"]
+            command("checkSchema", name="custom", schema=custom_schema)
+            assert state()["version"] == checked_version and http("api/backup")[2] == before_check
+            cycle = copy.deepcopy(custom_schema)
+            cycle["arrows"].append(dict(id="return", **{"from":"Office", "to":"Team"}))
+            assert command("checkSchema", ok=False, name="cycle", schema=cycle)["problem"]["code"] == "CyclicSchema"
+            bad_equation = copy.deepcopy(custom_schema)
+            bad_equation["equations"] = [dict(left=dict(start="Team", steps=["missing"]), right=dict(start="Team", steps=["office"]))]
+            command("checkSchema", ok=False, name="bad-equation", schema=bad_equation)
+            assert state()["version"] == checked_version and http("api/backup")[2] == before_check
+            print("PASS real definition checks reject cycles/invalid paths without changing catalog or file")
             created = command("schema", name="custom", schema=custom_schema)["snapshot"]
             custom_data = [dict(object="Team", rows=[dict(id="alpha", fields=[["office", "tokyo"]])]),dict(object="Office", rows=[dict(id="tokyo", fields=[])])]
             custom = command("apply", system="custom", source=created["revision"], data=custom_data)["snapshot"]

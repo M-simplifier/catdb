@@ -22,7 +22,7 @@ import Studio.Wire
 data Opened = Opened
   { openedPath :: FilePath, openedDatabase :: C.Database, openedCatalog :: Maybe C.Catalog
   , openedExternal :: Maybe C.Instance, openedLegacy :: Maybe C.Instance }
-data Work = Persist C.Catalog C.Instance (Maybe C.InstanceRev) | Previewed C.InstanceRev C.Instance
+data Work = Persist C.Catalog C.Instance (Maybe C.InstanceRev) | Previewed C.InstanceRev C.Instance | Checked C.Catalog
   deriving (Generic, NFData)
 data Session = Session
   { generation :: Integer, jobCounter :: Integer, opened :: Maybe Opened
@@ -122,6 +122,9 @@ submit runtime@(Runtime root cell) request = do
       base <- catalog (C.lookupInstance (C.InstanceRev source) c)
       next <- checkedData (C.instanceSchema base) dat
       pure (Previewed (C.InstanceRev source) next)
+    CheckDefinition expected definition -> work runtime expected $ \_ c -> do
+      (checked,_) <- prepare definition c
+      pure (Checked checked)
     Cancel -> do
       task <- modifyMVar cell $ \s -> pure (s {running=Nothing},snd <$> running s)
       case task of
@@ -225,6 +228,7 @@ work (Runtime _ cell) expected compute = mask $ \restore -> do
           case computed of
             Left e -> pure (done,failureReply e)
             Right _ | expected /= version s -> pure (done,failureReply (StaleRevision expected (version s)))
+            Right (Checked _) -> pure (done,success "定義をエンジンで検査しました。まだ保存していません。")
             Right (Previewed rev i) ->
               let def = C.definition (C.instanceSchema i)
                   labels = maybe [] (captionEntries rev i) (opened s >>= openedCatalog)

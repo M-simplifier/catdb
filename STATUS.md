@@ -1,6 +1,6 @@
 # PoC status
 
-CatDB 0.3 is a working proof of concept, not a production-stable database or a
+CatDB 0.4 is a working proof of concept, not a production-stable database or a
 drop-in SQLite replacement. CatDB Studio is a real local GUI over the database,
 with a Miso/WASM Haskell frontend and native Servant/Warp backend. Relay Desk
 remains a separate reference application using the same library and file format.
@@ -12,7 +12,7 @@ atomic validated edits, one-file persistence, recovery of incomplete tails,
 and compact backups. One process owns a database at a time; threads share one
 connection. Data and queries live in memory.
 
-Studio supports generic schema construction, target selection, batched drafts,
+Studio provides a graph-based Schema Canvas, a bounded Instance Lens, and a two-schema Migration Canvas. Pure Haskell DAG layout distinguishes parallel/long edges and preserves manually moved positions in browser state. Objects, generators, ordered path equations, object mappings and generator-to-path images can be selected from the diagrams or keyboard controls. Definition checks run through the native engine without persistence; status distinguishes drafts, validated proposals and committed definitions. Studio supports generic schema construction, target selection, batched drafts,
 atomic apply, search, deletion without cascade, checked reusable mappings,
 real Delta/Sigma/Pi views, immutable revision history, original-revision row
 witnesses, stale markers and explicit recomputation. It also exposes generated

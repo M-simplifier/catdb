@@ -2,6 +2,7 @@ module Main (main) where
 
 import CatDB
 import NativeMemory (nativeMemoryTests)
+import DiagramTests (diagramTests)
 import Demo
 import qualified Relay.Model as Relay
 import qualified Data.Aeson as JSON
@@ -239,6 +240,7 @@ storeTests dir = do
 
 main :: IO ()
 main = do
+  diagramTests
   args <- getArgs
   case args of
     ["busy",file] -> do

@@ -3,7 +3,7 @@ GHC-WASM ghc-9.14.1.20260330, source commit 05e0ef08e100cf3bd2150adcf8e53ba9ad30
 The exposed selected bignum backend is Native, not GMP.
 WASI SDK distribution: haskell-wasm/ghc-wasm-bindists 20251219T213239.
 Clang 21.1.8-wasi-sdk, custom LLVM commit abacb164cdfb155c778c9fd197682353415bce5b.
-WASI libc upstream notice texts were collected at 554a312ff521d2e50974600da385848ac43527ee; this identifies the notice source, not an independently established libc binary revision.
+WASI libc upstream notice texts were collected at 17a80af6bbd06addebaabe4c8bf6f3482082588d; this identifies the notice source, not an independently established libc binary revision.
 
 ========================================================================
 array 0.5.8.0 — BSD3
@@ -1988,7 +1988,7 @@ THE SOFTWARE.
 
 
 ========================================================================
-https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE
+https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE
 wasi-libc as a whole is multi-licensed under the
 Apache License v2.0 with LLVM Exceptions, the Apache License v2.0, and
 the MIT License. See the LICENSE-APACHE-LLVM, LICENSE-APACHE and LICENSE-MIT
@@ -2009,7 +2009,7 @@ the MIT License, and the original licenses of the third-party works.
 
 
 ========================================================================
-https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-APACHE
+https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE-APACHE
                               Apache License
                         Version 2.0, January 2004
                      http://www.apache.org/licenses/
@@ -2214,7 +2214,7 @@ limitations under the License.
 
 
 ========================================================================
-https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-APACHE-LLVM
+https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE-APACHE-LLVM
 
                                  Apache License
                            Version 2.0, January 2004
@@ -2438,7 +2438,7 @@ Software.
 
 
 ========================================================================
-https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-MIT
+https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE-MIT
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the
@@ -2465,7 +2465,7 @@ DEALINGS IN THE SOFTWARE.
 
 
 ========================================================================
-https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/libc-top-half/musl/COPYRIGHT
+https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/libc-top-half/musl/COPYRIGHT
 musl as a whole is licensed under the following standard MIT license:
 
 ----------------------------------------------------------------------

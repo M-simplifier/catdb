@@ -11,7 +11,7 @@ import subprocess
 import tarfile
 import zipfile
 
-VERSION = "0.3.0-poc"
+VERSION = "0.4.0-poc"
 
 
 def main():
@@ -24,8 +24,11 @@ def main():
     parser.add_argument("--ghc-source", type=pathlib.Path, required=True)
     parser.add_argument("--cache", type=pathlib.Path, required=True)
     parser.add_argument("--field-service-samples", type=pathlib.Path)
+    parser.add_argument("--studio-samples", type=pathlib.Path)
     args = parser.parse_args()
     repo, build, web = args.repo.resolve(), args.build.resolve(), args.web.resolve()
+    if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"], cwd=repo).strip():
+        raise SystemExit("Commit the reviewed source before packaging so BUILD_INFO and the source archive name the exact shipped commit.")
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     field_service=args.field_service_samples is not None
@@ -112,12 +115,17 @@ def main():
     if not field_service:
         shutil.copytree(repo / "reference/web", stage / "relay-web")
         shutil.copytree(repo / "samples", stage / "samples")
+        if args.studio_samples:
+            for sample in ["reading-notes.catdb", "mapping-example.catdb", "field-service-source.catdb", "field-service-complete.catdb"]:
+                shutil.copy2(args.studio_samples / sample, stage / "samples" / sample)
     else:
         (stage/"samples").mkdir()
         for sample in ["field-service-source.catdb","field-service-complete.catdb"]:
             shutil.copy2(args.field_service_samples/sample,stage/"samples"/sample)
     shutil.copytree(repo / "docs", stage / "docs")
     launchers=["Start Field Service.cmd","Start Completed Example.cmd"] if field_service else ["Start CatDB Studio.cmd","Start Relay Desk.cmd"]
+    if args.studio_samples and not field_service:
+        launchers += ["Start Reading Notes.cmd", "Start Mapping Example.cmd", "Start Field Service.cmd", "Start Completed Example.cmd"]
     for name in ["LICENSE", "README.md", "STATUS.md", "THIRD_PARTY_NOTICES.md"]+launchers:
         shutil.copy2(repo / name, stage / name)
     for name, body in gnu.items():
@@ -137,6 +145,10 @@ Drafts are unsaved browser proposals; Apply commits a checked new revision.
 
 日本語: Start CatDB Studio.cmdを起動してください。最初は「読書メモ」の
 見本か空のDBを作れます。保存先のフルパスは「ファイルと書き出し」で確認できます。
+Start Reading Notes.cmd opens the fictional graph/path example. Start Mapping
+Example.cmd opens the Sigma/Pi example. The Field Service launchers open the
+source course or the actually computed completed example. Each sample is copied
+to data/ only when its working file does not exist; existing work is preserved.
 ガイド: docs/studio.ja.md / English: docs/studio.md
 
 Relay Desk remains an application example. Start Relay Desk.cmd launches it.

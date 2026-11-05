@@ -106,6 +106,7 @@ checkedData schema tables = do
 data Request
   = CreateFile FilePath Text | OpenFile FilePath | AdoptLegacy FilePath Text | CloseFile
   | Preview Text Text WData | Mutate Text Mutation | Inspect Text | Explain WRef
+  | CheckDefinition Text Mutation
   | Backup FilePath | Cancel
   deriving (Eq, Show)
 data Mutation
@@ -126,7 +127,9 @@ instance FromJSON Request where
       "close" -> pure CloseFile
       "preview" -> Preview <$> expected <*> v .: "source" <*> v .: "data"
       "schema" -> Mutate <$> expected <*> (NewSchema <$> v .: "name" <*> v .: "schema")
+      "checkSchema" -> CheckDefinition <$> expected <*> (NewSchema <$> v .: "name" <*> v .: "schema")
       "mapping" -> Mutate <$> expected <*> (SaveMapping <$> v .: "mapping")
+      "checkMapping" -> CheckDefinition <$> expected <*> (SaveMapping <$> v .: "mapping")
       "apply" -> Mutate <$> expected <*> (ApplyDraft <$> v .: "system" <*> v .: "source" <*> v .: "data" <*> v .:? "reason" .!= "Studioでレコードを編集")
       "adopt" -> Mutate <$> expected <*> (AdoptHead <$> v .: "name" <*> v .: "source")
       "run" -> Mutate <$> expected <*> (RunView <$> v .: "name" <*> v .: "operation" <*> v .: "mapping" <*> v .: "source" <*> v .:? "system")

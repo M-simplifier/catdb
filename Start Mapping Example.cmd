@@ -1,0 +1,6 @@
+@echo off
+cd /d "%~dp0"
+if not exist "%~dp0data" mkdir "%~dp0data"
+if not exist "%~dp0data\mapping-example.catdb" copy "%~dp0samples\mapping-example.catdb" "%~dp0data\mapping-example.catdb" >nul
+"%~dp0catdb-studio.exe" --browser --data-dir "%~dp0data" --file "%~dp0data\mapping-example.catdb"
+if errorlevel 1 pause

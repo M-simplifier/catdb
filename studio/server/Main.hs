@@ -67,7 +67,7 @@ main = withSocketsDo $ do
     p <- case addr of SockAddrInet number _ -> pure (fromIntegral number); _ -> die "Expected a loopback socket."
     let url = "http://127.0.0.1:" ++ show p ++ "/#" ++ BC.unpack token
         ready = do
-          putStrLn ("CatDB Studio v0.3.0-poc\nOpen " ++ url ++ "\nData directory: " ++ dataRoot ++ "\nPress Ctrl+C or close this window to stop.")
+          putStrLn ("CatDB Studio v0.4.0-poc\nOpen " ++ url ++ "\nData directory: " ++ dataRoot ++ "\nPress Ctrl+C or close this window to stop.")
           when (optionBrowser opts) (openBrowser url)
         settings = setBeforeMainLoop ready (setPort p (setHost "127.0.0.1" (setServerName "CatDB Studio" defaultSettings)))
     runSettingsSocket settings sock (application p token assets runtime) `finally` shutdown runtime

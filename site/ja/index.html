@@ -1,43 +1,151 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CatDB — 二つの道をたどって、矛盾する更新を止める。</title><meta name="description" content="CatDBは、スキーマ間の対応からビュー・同一視・整合する組を計算する、Haskell製の組込みDBです。CatDB Studioで自分のファイルを開き、レコードと道を直接編集できます。"><meta name="theme-color" content="#111510">
-<link rel="canonical" href="https://m-simplifier.github.io/catdb/ja/">
-<link rel="alternate" hreflang="en" href="https://m-simplifier.github.io/catdb/"><link rel="alternate" hreflang="ja" href="https://m-simplifier.github.io/catdb/ja/">
-<meta property="og:type" content="website"><meta property="og:site_name" content="CatDB"><meta property="og:title" content="CatDB — 二つの道をたどって、矛盾する更新を止める。"><meta property="og:description" content="CatDBは、スキーマ間の対応からビュー・同一視・整合する組を計算する、Haskell製の組込みDBです。CatDB Studioで自分のファイルを開き、レコードと道を直接編集できます。">
-<link rel="icon" href="../icon.svg" type="image/svg+xml"><link rel="stylesheet" href="../style.css"><script src="../site.js" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8f8f2">
+  <link rel="canonical" href="https://m-simplifier.github.io/catdb/ja/">
+  <link rel="alternate" hreflang="ja" href="https://m-simplifier.github.io/catdb/ja/">
+  <link rel="alternate" hreflang="en" href="https://m-simplifier.github.io/catdb/">
+  <link rel="alternate" hreflang="x-default" href="https://m-simplifier.github.io/catdb/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://m-simplifier.github.io/catdb/ja/">
+  <meta property="og:title" content="CatDB — データの構造そのものを、操作する。">
+  <meta property="og:description" content="図を描き、経路を検査し、Δ・Σ・Πでデータを計算する実験的DB。">
+  <meta property="og:image" content="https://m-simplifier.github.io/catdb/assets/studio-graph.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="description" content="CatDBはスキーマを対象と矢印で定義し、検査済みの対応からΔ・Σ・Πを計算するHaskell製の実験的データベース。Studioで操作し、結果の由来まで追える。">
+  <title>CatDB — データの構造そのものを、操作する。</title>
+  <link rel="icon" type="image/svg+xml" href="../icon.svg">
+  <link rel="stylesheet" href="../style.css">
+  <script src="../site.js" defer></script>
 </head>
 <body>
-<a class="skip" href="#main">本文へ</a>
-<header class="wrap top"><a class="wordmark" href="#main"><img src="../icon.svg" width="31" height="31" alt="">CatDB<span>v0.3 PoC</span></a><nav class="nav" aria-label="メインナビゲーション"><a href="#studio">Studio</a><a href="#model">DBの仕組み</a><a class="nav-cta" href="#start">ダウンロード ↗</a><span class="languages"><a href="../" lang="en" hreflang="en" >EN</a><a href="./" lang="ja" hreflang="ja" aria-current="page">日本語</a></span></nav></header>
-<main id="main">
-<section class="hero wrap"><div class="hero-grid"><div>
-<p class="eyebrow">A NATIVE DATABASE OF CONNECTED RECORDS</p><p class="product-type">Haskellライブラリ ＋ CatDB Studio · 一つのネイティブファイル</p>
-<h1>二つの道をたどって、<br><em>矛盾する更新を<br>止める。</em></h1>
-<p class="lead">CatDBは、スキーマ間の対応からビュー・同一視・整合する組を計算する、Haskell製の組込みDBです。CatDB Studioで自分のファイルを開き、レコードと道を直接編集できます。</p><div class="ctas"><a class="button" href="#start">CatDB Studioを試す ↗</a><a class="button ghost" href="https://github.com/M-simplifier/catdb">ライブラリを読む →</a></div>
-<div class="hero-proof"><span>一つの .catdb</span><span>配布版はコンパイラー不要</span><span>MIT · Working PoC</span></div></div>
-<div class="demo" id="path-demo"><div class="demo-top"><span><i class="dot"></i>CATDB / 二つの道、同じ関係</span><span class="mono">Note → Book</span></div>
-<div class="demo-stage"><div class="source-heading"><span>メモと、その引用は、同じ本に着く。</span></div>
-<div class="studio-route"><span class="studio-record">Note <b>n1</b></span><code>book →</code><span class="studio-record endpoint" id="direct-book">Book <b>b1</b></span></div>
-<div class="studio-equation" id="path-equals">＝</div>
-<div class="studio-route"><span class="studio-record">Note <b>n1</b></span><code>quote → q1<br>quoteBook →</code><span class="studio-record endpoint">Book <b>b1</b></span></div>
-<button type="button" class="demo-trigger" id="path-button" aria-pressed="false">直接の本だけを b2 に変える ↓</button>
-<p class="demo-explain" id="path-message" aria-live="polite">このパス等式は、すべてのNoteの行に適用されます。</p></div>
-<div class="demo-bottom">ここは仕組みを示す図解です。ダウンロード版のStudioは、実際のエンジンで検査・保存します。</div></div></div></section>
-<section class="section app-section" id="studio"><div class="wrap"><div class="app-heading"><div><p class="eyebrow">CATDB STUDIO</p><h2>CatDB Studioで、DBを直接使う。</h2></div><p>小さな読書メモで一周することも、空のファイルに自分のスキーマを作ることもできます。有限で循環しないスキーマを、同じ道具で扱います。</p></div>
-<div class="capabilities"><div><strong>形と約束を作る</strong><small>オブジェクト・矢印・二つの道の等式</small></div><div><strong>変更をまとめて確認</strong><small>参照先を選び、分岐を見て、原子的に保存</small></div><div><strong>三つの計算を使う</strong><small>対応を検査し、Δ・Σ・Πを実行</small></div><div><strong>元の版までたどる</strong><small>確定版・由来・明示的な再計算</small></div></div>
-<div class="studio-workflow"><article><span>01</span><h3>片方の関係を変える。</h3><p>直接の道はb2へ、引用を経由する道はb1へ。選んだ行の図が分かれます。確定版はそのままです。</p></article><article><span>02</span><h3>意図を持って直す。</h3><p>引用もq2へ変更し、下書き全体を確認。二つの変更を一つの版にします。参照を勝手に直すことはありません。</p></article><article><span>03</span><h3>結果と、その由来を見る。</h3><p>Δのカードから、計算に使った版の元のメモへ戻れます。元の版が進んでも、再計算するまで結果を保ちます。</p></article></div>
-<p class="dark-note">画面はMiso/HaskellをWebAssemblyにコンパイルし、ネイティブのServantプロセスがCatDBを実行・保存します。正本は.catdbの一ファイルです。JSONやSQLiteの権威的なサイドカーファイルは作りません。</p></div></section>
-<section class="section light" id="model"><div class="wrap"><div class="split"><div><p class="eyebrow">CHECKED SCHEMAS AND MAPPINGS</p><h2>道の一致を、<br>DBの約束にする。</h2><p class="body-copy">スキーマに「この二つの道は等しい」と宣言すると、すべての確定した行がその等式を守る必要があります。参照が途切れたり、終点が異なったりする変更は、まとまり全体を拒否します。</p><p class="body-copy">スキーマの対応は、今日の行が偶然一致するかとは別に検査します。等式で同じ射になる道は、入力した表記が違っても同じ像として扱います。</p></div><div class="mapping-block"><div class="mapping-head">F : C → D</div><div class="mapping-body"><div class="mapping-step"><strong>オブジェクトを対応づける</strong><small>OBJECTS</small></div><div class="mapping-step"><strong>矢印を、合成できる道へ送る</strong><small>PATHS</small></div><div class="mapping-step"><strong>宣言したパス等式を保つ</strong><small>EQUATIONS</small></div><div class="mapping-seal">mapping :: … → Either Error Mapping</div></div></div></div></div></section>
-<section class="section api-area"><div class="wrap"><div class="api-top"><div><p class="eyebrow">Σ_F ⊣ Δ_F ⊣ Π_F</p><h2>三つの計算を、<br>由来とともに使う。</h2></div><p>Studioから、ライブラリの実際の演算を使います。入力した版と各行の型付きの由来は、ネイティブカタログに残ります。</p></div>
-<div class="operations"><div class="op"><span class="op-symbol">Δ</span><div><h3>別の形で読む</h3><small>F : OUTPUT → INPUT</small></div><div><p>検査済みの対応で読み直します。同じ本を指す二枚のカードも二枚のまま。PullRefから元の行へ戻れます。</p></div></div><div class="op"><span class="op-symbol">Σ</span><div><h3>宣言した同一視でまとめる</h3><small>F : INPUT → OUTPUT</small></div><div><p>輸送したレコードを同値類にまとめ、SigmaClassで元の行と道を見ます。実在物の同一性を推定しません。</p></div></div><div class="op"><span class="op-symbol">Π</span><div><h3>関係がそろう組を集める</h3><small>F : INPUT → OUTPUT</small></div><div><p>すべての矢印の関係を満たす族を列挙。PiFamilyで成分を確認し、空の族も明示します。整合性は真実性の証明ではありません。</p></div></div></div><p class="math-note"><a href="https://github.com/M-simplifier/catdb/blob/main/docs/mathematics.md">数理と実装を読む →</a> · <a href="https://github.com/M-simplifier/catdb/blob/main/docs/native-memory.md">ネイティブカタログの契約 →</a></p></div></section>
-<section class="get-started" id="start"><div class="wrap start-grid"><div><p class="eyebrow">UNZIP. OPEN. EXPLORE.</p><h2>自分のデータを、<br>一つのファイルに。</h2><p>Windows版を展開し、Start CatDB Studio.cmdを起動。見本か空のDBを作るか、既存の.catdbを開きます。コンパイラーの準備は不要です。</p><a class="button" href="https://github.com/M-simplifier/catdb/releases/download/v0.3.0-poc/catdb-0.3.0-poc-windows.zip">Windows版をダウンロード ↗</a><div class="start-links"><a href="https://github.com/M-simplifier/catdb/blob/main/docs/studio.ja.md">Studioの使い方</a><a href="https://github.com/M-simplifier/catdb#build">ソースからビルド</a><a href="https://github.com/M-simplifier/catdb/blob/main/examples/Embedded.hs">Haskellへの組込み例</a></div></div><div><div class="terminal"><div class="terminal-top"><span>POWERSHELL</span><button type="button" class="copy" id="copy-command">コピー</button></div><pre><span class="prompt">&gt; </span><span id="command">.\catdb-studio.exe --browser</span>
+  <a class="skip-link" href="#main">本文へスキップ</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#top" class="brand" aria-label="CatDB ホーム"><img src="../icon.svg" alt="" width="38" height="38"><strong>CatDB</strong><span>categorical database</span></a>
+      <a class="language-link" href="../" lang="en" hreflang="en">EN</a><nav class="desktop-nav" aria-label="メインナビゲーション"><a href="#idea">考え方</a><a href="#operations">三つの計算</a><a href="#studio">Studio</a><a href="#limits">現在地</a></nav>
+      <a class="nav-action" href="https://github.com/M-simplifier/catdb/releases/tag/v0.4.0-poc" target="_blank" rel="noopener noreferrer">入手する ↗</a>
+      <button id="menu-button" class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="ナビゲーションを開く">☰</button>
+    </div>
+    <nav id="mobile-nav" class="mobile-nav" hidden aria-label="モバイルナビゲーション"><a href="#idea">考え方</a><a href="#operations">三つの計算</a><a href="#studio">Studio</a><a href="#limits">現在地</a><a href="#start">ダウンロード</a></nav>
+  </header>
 
-CatDB Studio v0.3.0-poc
-<span class="prompt"># 表示される起動URLから開きます。</span>
-<span class="prompt"># ファイル名だけなら data/ に保存。</span>
-<span class="prompt"># Ctrl+Cで終了します。</span></pre></div><p class="small">カタログのない従来ファイルは読み取り用で開きます。別ファイルへ明示的に取り込むと編集でき、元のファイルを残せます。</p></div></div></section>
-<section class="facts light"><div class="wrap facts-layout"><div><span class="pill">WORKING PROOF OF CONCEPT</span><h2>使える範囲を、<br>確かめられるPoC。</h2><p>有限・非循環のスキーマ、必ず行き先がある参照、メモリに収まるデータ、一つのローカルプロセスが対象です。関手的なデータ管理を試す独立実装で、本番DBとしての成熟度を主張しません。</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/main/STATUS.md">正確な制限を読む →</a></div><div><details open><summary>何が保存されますか？</summary><p>確定した版、検査済みの対応、ビュー定義、型付きの由来をネイティブ.catdbに保存します。下書きは未保存の提案です。古い版への要求で新しい確定版を上書きしません。バックアップは確定したカタログ全体を含み、JSON書き出しはライブラリでの再利用用です。</p></details><details><summary>SQLiteを置き換えられますか？</summary><p>SQL互換、ディスク索引、最適化器、NULL、汎用の値の代数、再帰スキーマ、自動スキーマ更新はありません。計算と保持する履歴には明示的な上限があり、超過した途中結果を成功として保存しません。</p></details><details><summary>先に圏論を勉強する必要はありますか？</summary><p>行を選び、道をたどるところから始められます。数学の名前は必要に応じて表示できます。Haskell向けライブラリでは、検査済みのスキーマ・対応・自然変換・普遍写像まで扱えます。</p></details><details><summary>ライセンスと貢献について</summary><p>オリジナルのコード・UI・サイトはMIT。MisoやWASMランタイムなどの依存物には、それぞれのライセンスが適用されます。Windows版には必要な通知と対応ソースを用意します。バグや用途はGitHub Issueへ。外部PRは受け付けません。</p></details></div></div></section>
-<section class="section" id="relay"><div class="wrap split"><div><p class="eyebrow">AN APPLICATION EXAMPLE</p><h2>Relay Deskは、<br>CatDBの応用例です。</h2><p>同梱の参照アプリは、CSV名簿を照合し、チームが一致する担当候補を列挙し、共有用一覧を書き出します。Studioとともに残しています。CatDB本体は、別の用途にも組み込めるDBライブラリです。</p><a class="proof-link" href="https://github.com/M-simplifier/catdb/blob/main/docs/guide.ja.md">Relay Deskのガイド →</a></div><div class="app-frame"><div class="app-frame-head">RELAY DESK / 参照アプリの実際の画面</div><img class="app-image" src="../assets/relay-desk.jpg" alt="CatDB Studioとは別の参照アプリ、Relay Deskの実画面。" width="1264" height="1076" loading="lazy"></div></div></section>
-</main><footer class="wrap bottom"><div><a class="wordmark" href="#main">CatDB</a><p class="local-detail">Haskell製の独立した実装。 <a href="https://arxiv.org/abs/1009.1166">Functorial Data Migration</a> · <a href="https://categoricaldata.net/CQL/">CQL</a> は先行研究。CQLのコードは含みません。</p></div><div class="links"><a href="https://github.com/M-simplifier/catdb">GitHub</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/studio.ja.md">使い方</a><a href="https://github.com/M-simplifier/catdb/issues">Issues</a><a href="https://github.com/M-simplifier/catdb/blob/main/LICENSE">MIT</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/licensing.md">依存ライセンス</a></div></footer><div class="toast" id="toast" role="status" aria-live="polite"></div></body></html>
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><i></i> OPEN SOURCE / HASKELL / v0.4.0 PoC</p>
+          <h1>データの構造<br>そのものを、<br><em>操作する。</em></h1>
+          <p class="hero-lead">データベースは、行や値だけでできているわけじゃない。「何と何が、どうつながるか」もデータの一部だ。</p>
+          <p class="hero-description">CatDBは、対象・矢印・経路の等式でスキーマを定義し、構造の対応からデータ変換を導くHaskell製の実験的DB。変換の結果だけでなく、その由来まで追いかけられます。</p>
+          <div class="button-row"><a class="button primary" href="#operations">何ができるか見る <span>↘</span></a><a class="button plain" href="#studio">Studioを知る <span>→</span></a></div>
+          <p class="hero-honesty"><span>●</span> 実際に動く研究用PoC。SQLiteの置き換えではありません。</p>
+        </div>
+        <div class="hero-art" aria-label="元の構造と、別の構造の対応を表す模式図">
+          <div class="art-top"><span>01 / STRUCTURE</span><span>↗</span></div>
+          <div class="schema-pair">
+            <div class="schema-card">
+              <div class="schema-label"><i></i> SCHEMA D <small>元の構造</small></div>
+              <svg viewBox="0 0 260 215" role="img" aria-label="Noteから直接Bookへ、またQuoteを介してBookへ至る経路">
+                <defs><marker id="arrow-a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7" fill="none" stroke="#8bbda6" stroke-width="1.5"/></marker></defs>
+                <path d="M74 61Q140 19 211 61" class="edge" marker-end="url(#arrow-a)"/><path d="M74 89V155" class="edge" marker-end="url(#arrow-a)"/><path d="M110 173L204 89" class="edge" marker-end="url(#arrow-a)"/>
+                <text x="141" y="34" class="edge-name">book</text><text x="20" y="131" class="edge-name">quote</text><text x="164" y="147" class="edge-name">quoteBook</text>
+                <rect x="27" y="49" width="94" height="45" rx="10" class="node"/><rect x="179" y="49" width="76" height="45" rx="10" class="node"/><rect x="27" y="157" width="94" height="45" rx="10" class="node"/>
+                <text x="74" y="77" class="node-name">Note</text><text x="217" y="77" class="node-name">Book</text><text x="74" y="185" class="node-name">Quote</text>
+              </svg>
+              <div class="schema-caption">対象と矢印 <span>03 / 03</span></div>
+            </div>
+            <div class="schema-bridge" aria-hidden="true"><span>F : C → D</span><strong>←</strong><span>対応</span></div>
+            <div class="schema-card">
+              <div class="schema-label coral"><i></i> SCHEMA C <small>別の見方</small></div>
+              <svg viewBox="0 0 260 215" role="img" aria-label="CardからBookへの矢印を持つ構造">
+                <defs><marker id="arrow-b" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7" fill="none" stroke="#efa98e" stroke-width="1.5"/></marker></defs>
+                <path d="M103 118H187" class="edge coral-edge" marker-end="url(#arrow-b)"/><text x="147" y="99" class="edge-name">volume</text>
+                <rect x="14" y="96" width="89" height="45" rx="10" class="node coral-node"/><rect x="187" y="96" width="65" height="45" rx="10" class="node coral-node"/>
+                <text x="59" y="124" class="node-name">Card</text><text x="220" y="124" class="node-name">Book</text>
+              </svg>
+              <div class="schema-caption">別のスキーマ <span>02 / 01</span></div>
+            </div>
+          </div>
+          <div class="art-bottom"><span>構造の対応を定義し、検査し、計算に使う。</span><span>C ⇄ D</span></div><p class="mapping-example">F : Card ↦ Note · volume ↦ book ≡ quote ; quoteBook</p>
+        </div>
+      </div>
+      <div class="container hero-bottom"><span>A DIFFERENT FOUNDATION FOR DATA</span><span>↓</span><span>SCROLL TO EXPLORE</span></div>
+    </section>
+
+    <section id="idea" class="idea-section space">
+      <div class="container split-layout">
+        <div class="section-mark"><b></b> 01 / THE IDEA</div>
+        <div>
+          <p class="kicker">なぜ「構造」を扱うのか</p>
+          <h2>データを移すたび、<br>その<em>意味</em>まで書き直していないか。</h2>
+          <p class="section-lead">二つのシステムが、同じ世界を別の形で表している。そのとき必要なのは、テーブルをコピーする手順だけではありません。「どの概念が、どの概念に対応するか」という約束です。</p>
+          <div class="idea-grid">
+            <article><span>01 / DEFINE</span><h3>構造を明示する</h3><p>スキーマを対象と矢印で記述。経路が等しくなるという約束も、検査可能な定義にします。</p></article>
+            <article><span>02 / MAP</span><h3>対応を再利用する</h3><p>どの対象と矢印を、別の構造のどこに送るかを定義。データが偶然合うだけでは認めません。</p></article>
+            <article><span>03 / TRACE</span><h3>出自を辿る</h3><p>変換後の行から、元の版と行へ。どの演算で生まれた結果かを、型付きの由来として残します。</p></article>
+          </div>
+          <div class="honesty-note"><b>NOT MAGIC</b><p>スキーマの対応は人が宣言します。CatDBが意味を推測したり、現実世界の同一性を自動判定したりするわけではありません。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="operations" class="operations-section space">
+      <div class="container">
+        <div class="section-mark inverted"><b></b> 02 / THREE OPERATIONS <span>Σ<sub>F</sub> ⊣ Δ<sub>F</sub> ⊣ Π<sub>F</sub></span></div>
+        <div class="operations-heading"><div><p class="kicker">構造の対応から、三つの演算へ</p><h2>「どうつながるか」から、<br><em>何が得られるか。</em></h2></div><p>CatDBは、検査済みのスキーマ対応に沿ってデータを読み直し、まとめ、整合する組を組み立てます。共通の数学的なモデルから生まれる操作です。</p></div>
+        <div class="operation-tabs" role="tablist" aria-label="演算を選ぶ">
+          <button class="operation-tab active" role="tab" type="button" id="tab-delta" aria-selected="true" aria-controls="panel-delta" tabindex="0" data-panel="delta"><small>01</small><b>Δ</b><span>別の形で読む</span><i>↗</i></button>
+          <button class="operation-tab" role="tab" type="button" id="tab-sigma" aria-selected="false" aria-controls="panel-sigma" tabindex="-1" data-panel="sigma"><small>02</small><b>Σ</b><span>宣言した同一視でまとめる</span><i>↗</i></button>
+          <button class="operation-tab" role="tab" type="button" id="tab-pi" aria-selected="false" aria-controls="panel-pi" tabindex="-1" data-panel="pi"><small>03</small><b>Π</b><span>整合する組を集める</span><i>↗</i></button>
+        </div>
+        <div class="operation-panel active" role="tabpanel" id="panel-delta" aria-labelledby="tab-delta" tabindex="0">
+          <div class="operation-copy"><span>DELTA / Δ_F</span><h3>指定した構造で、<br>元の行を読み直す。</h3><p>スキーマの対応に沿って、元のデータを新しい見方で読み直します。読書メモを「カード」として扱う。同じ本を指す二枚のメモも、勝手に一つにはなりません。</p><div class="takeaway"><small>重要なこと</small><strong>参照元の行と版を辿れる</strong></div></div>
+          <div class="example-area"><div class="example-title"><span>NOTES → CARDS</span><span>模式例</span></div><div class="record-migration"><div class="record-set"><span>元のメモ / Note</span><div><b>n1</b> book → b1</div><div><b>n2</b> book → b1</div><div><b>n3</b> book → b2</div></div><div class="migration-arrow">Δ <span>→</span></div><div class="record-set result"><span>カード / Card</span><div><b>c1</b> volume → b1</div><div><b>c2</b> volume → b1</div><div><b>c3</b> volume → b2</div></div></div><p>3件の入力から3枚のカード。自動的にはまとめない。</p></div>
+        </div>
+        <div class="operation-panel" role="tabpanel" id="panel-sigma" aria-labelledby="tab-sigma" tabindex="0" hidden>
+          <div class="operation-copy"><span>SIGMA / Σ_F</span><h3>対応が定めた<br>同一視で、まとめる。</h3><p>データを別の構造へ運び、矢印と対応が要求する同値関係に沿ってまとめます。結果は同値類として残り、どの元の要素からできたかを調べられます。</p><div class="takeaway"><small>重要なこと</small><strong>現実の同一性は自動判定しない</strong></div></div>
+          <div class="example-area"><div class="example-title"><span>DECLARED IDENTIFICATION</span><span>模式例</span></div><div class="tokens"><span>a₁</span><span>a₂</span><span>b₁</span></div><div class="down-arrow">対応に沿って輸送・同一視 <strong>↓</strong></div><div class="classes"><div><small>CLASS / 0</small><strong>[a₁, a₂]</strong><span>二つの由来</span></div><div><small>CLASS / 1</small><strong>[b₁]</strong><span>別の同値類</span></div></div><p>具体的な同値関係は検査済みの構造対応から決まります。</p></div>
+        </div>
+        <div class="operation-panel" role="tabpanel" id="panel-pi" aria-labelledby="tab-pi" tabindex="0" hidden>
+          <div class="operation-copy"><span>PI / Π_F</span><h3>関係の条件に合う<br>組を、すべて見る。</h3><p>複数の対象の要素を選び、矢印の関係が整合する組を計算します。人と依頼が同じチームを指すとき、それは一つの候補。最良の候補を選ぶ仕組みではありません。</p><div class="takeaway"><small>重要なこと</small><strong>候補の一致は、事実の証明ではない</strong></div></div>
+          <div class="example-area"><div class="example-title"><span>COMPATIBLE FAMILIES</span><span>模式例</span></div><div class="pair-inputs"><div><small>Person</small><p>P1 <em>Team A</em></p><p>P2 <em>Team B</em></p></div><div><small>Ticket</small><p>T1 <em>Team A</em></p><p>T2 <em>Team A</em></p></div></div><div class="down-arrow">同じTeamを指す組 <strong>↓</strong></div><div class="matches"><span>P1 + T1 <b>Team A ✓</b></span><span>P1 + T2 <b>Team A ✓</b></span></div><p>条件に整合する2組を列挙。割り当てを決めるものではありません。</p></div>
+        </div>
+        <div class="operations-footer"><span>図解は理解用です。実計算はStudioかHaskell APIで行います。</span><a href="https://github.com/M-simplifier/catdb/blob/main/docs/mathematics.ja.md" target="_blank" rel="noopener noreferrer">数学的な定義 ↗</a></div>
+      </div>
+    </section>
+
+    <section class="consistency-section space">
+      <div class="container two-col">
+        <div><div class="section-mark"><b></b> 03 / CHECKED RELATIONSHIPS</div><p class="kicker">構造は、単なる図ではない</p><h2>同じと決めた二つの道は、<br>データでも一致する。</h2><p>スキーマに「直接たどる道」と「引用を経由する道」は等しいと宣言する。その約束を壊す更新は、保存前に検出できます。</p><p>これはCatDBの一つの機能。大切なのは、データの関係が検査可能な構造になっていることです。</p><span class="demo-label">INTERACTIVE EXPLANATION / 図解シミュレーション</span></div>
+        <div class="path-demo">
+          <div class="path-top"><span>NOTE / n1</span><span id="path-status" class="valid">● 整合しています</span></div>
+          <div class="path-body"><div><small>直接の道</small><p>n1 <span>book →</span> <b id="direct-target">b1</b></p></div><div class="path-equals" id="path-equals">=</div><div><small>引用を経由</small><p>n1 <span id="via-quote">quote → q1 → quoteBook →</span> <b id="quote-target">b1</b></p></div></div>
+          <div class="path-message" id="path-message" aria-live="polite">どちらの道も同じ本 b1 に着きます。</div>
+          <div class="path-buttons"><button id="change-path" type="button">直接の本をb2に変える</button><button id="fix-path" type="button" disabled>引用側も整合させる</button><button id="reset-path" type="button" aria-label="図解を初期状態に戻す">↺</button></div>
+          <div class="path-disclaimer">これは図解用の状態切替です。Studioでは実際のエンジンが下書き全体を検査し、矛盾する更新を確定しません。</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="studio" class="studio-section space">
+      <div class="container">
+        <div class="studio-intro two-col"><div><div class="section-mark"><b></b> 04 / CATDB STUDIO</div><p class="kicker">実際に使って、確かめる</p><h2>数式の向こうに、<br>動くStudioがある。</h2></div><div><p>CatDB Studioは、ローカルの <code>.catdb</code> ファイルを開いて、スキーマ・レコード・対応・ビューを操作するGUIです。Haskell製エンジンが検査し、確定版と由来を一つのファイルに保存します。</p><a class="text-link" href="https://github.com/M-simplifier/catdb/blob/main/docs/studio.ja.md" target="_blank" rel="noopener noreferrer">操作ガイドを読む ↗</a></div></div>
+        <figure class="studio-capture"><img src="../assets/studio-graph.png" alt="実際のCatDB Studio。読書メモのNote、Quote、Bookと、bookとquote・quoteBookの二経路を表示したSchema Canvas" width="1600" height="1000" loading="lazy"><figcaption>CatDB Studio · 実アプリのSchema Canvas。架空の読書メモを表示しています。</figcaption></figure>
+        <div class="studio-steps"><article><span>01 — DEFINE</span><h3>形を作る</h3><p>図の対象と生成射を選び、二本の道を経路等式として定義。保存済みの定義は別名で新しく作れます。</p></article><article><span>02 — CHECK</span><h3>変更を確かめる</h3><p>複数の変更を下書きにまとめ、全体を検査してから原子的に保存。</p></article><article><span>03 — DERIVE</span><h3>結果と由来を見る</h3><p>Δ・Σ・Πでビューを作り、どの版の何から生まれたかを辿る。</p></article></div>
+      </div>
+    </section>
+
+    <section class="theory-section space"><div class="container theory-layout"><div><p class="kicker">数学が、設計の芯にある</p><h2>ただの比喩ではなく、<br>実行される圏論。</h2><p>スキーマを圏、データを有限集合への関手とする。その定義の上で、三つのデータ移行は随伴する演算として実装されています。</p><a class="text-link" href="https://github.com/M-simplifier/catdb/blob/main/docs/mathematics.ja.md" target="_blank" rel="noopener noreferrer">定義と実装を読む ↗</a></div><div class="math-card"><span>THE MODEL</span><p><small>Schema</small><b>C</b></p><p><small>Data</small><b>I : C → FinSet</b></p><p><small>Mapping</small><b>F : C → D</b></p><div class="big-formula">Σ<sub>F</sub> ⊣ Δ<sub>F</sub> ⊣ Π<sub>F</sub></div><footer>関係の合成・同一視・整合性を、一貫した計算規則として扱う。</footer></div></div></section>
+
+    <section id="limits" class="limits-section space"><div class="container"><div class="limits-intro two-col"><div><div class="section-mark"><b></b> 05 / HONEST SCOPE</div><p class="kicker">v0.4.0 · Working proof of concept</p><h2>できることと、<br>まだできないこと。</h2></div><p>CatDBは、新しいデータモデルを試し、その性質を実際に計算するための独立実装です。既存のRDBMSを置き換える完成品ではありません。</p></div><div class="limits-columns"><div class="limit-card supported"><h3>✓　現在の実装</h3><ul><li>有限で循環しないスキーマと経路等式</li><li>全行に必ず一つの行き先を持つ矢印</li><li>検査済みのスキーマ対応</li><li>Δ・Σ・Πと型付きの由来情報</li><li>原子的な保存と不変の版履歴</li><li>一つのネイティブ .catdb ファイル</li><li>図から定義・更新・移行できるWindows向けGUI</li></ul></div><div class="limit-card not-yet"><h3>—　このPoCの範囲外</h3><ul><li>SQLと汎用の文字列・数値カラム</li><li>循環・再帰するスキーマ</li><li>ディスク索引とクエリ最適化</li><li>ネットワークの複数ユーザー利用</li><li>大規模データ・本番運用</li><li>自動的な人物の同定や意味推測</li></ul></div></div><a class="text-link" href="https://github.com/M-simplifier/catdb/blob/main/STATUS.md" target="_blank" rel="noopener noreferrer">制限・計算量の上限・安全上の注意を詳しく読む ↗</a></div></section>
+
+    <section id="start" class="start-section"><div class="container start-layout"><div><p class="eyebrow"><i></i> OPEN. EXPLORE. QUESTION.</p><h2>自分の手で、<br><em>構造を動かそう。</em></h2><p>まずは小さな読書メモから。スキーマを見て、行を変え、検査し、別の見方で読み直す。CatDBが考えていることは、実際に試すのがいちばん早い。</p><div class="button-row"><a class="button inverted" href="https://github.com/M-simplifier/catdb/releases/download/v0.4.0-poc/catdb-0.4.0-poc-windows.zip">Windows版をダウンロード ↗</a><a class="button outline" href="https://github.com/M-simplifier/catdb/blob/main/docs/studio.ja.md" target="_blank" rel="noopener noreferrer">操作ガイド →</a></div><small>v0.4.0-poc / ZIPを展開して起動 / コンパイラー不要 / ローカルのみ</small></div><div class="haskell-box"><span>ALSO FOR DEVELOPERS</span><h3>Haskellから<br>組み込む。</h3><p>GUIだけではありません。ライブラリとしてスキーマ・インスタンス・対応と演算をプログラムに組み込めます。</p><div class="code-box"><div>HASKELL / API <button type="button" id="copy-code">コピー ↗</button></div><pre><code id="code-snippet">view       &lt;- delta publicMap source
+quotient   &lt;- sigma identityMap records
+compatible &lt;- piMigration matchMap items</code></pre></div><a href="https://github.com/M-simplifier/catdb/blob/main/examples/Embedded.hs" target="_blank" rel="noopener noreferrer">実行可能な組込み例を読む ↗</a></div></div></section>
+  </main>
+  <footer class="site-footer"><div class="container footer-main"><div><a class="brand footer-brand" href="#top"><img src="../icon.svg" alt="" width="38" height="38"><strong>CatDB</strong></a><p>データの構造を計算する、<br>Haskell製の実験的データベース。</p></div><div class="footer-links"><div><span>PROJECT</span><a href="https://github.com/M-simplifier/catdb" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/M-simplifier/catdb/releases/tag/v0.4.0-poc" target="_blank" rel="noopener noreferrer">Releases ↗</a><a href="https://github.com/M-simplifier/catdb/issues" target="_blank" rel="noopener noreferrer">Issues ↗</a><a href="https://github.com/M-simplifier/catdb/blob/main/CONTRIBUTING.md">提案・不具合報告はIssueへ ↗</a></div><div><span>READ</span><a href="https://github.com/M-simplifier/catdb/blob/main/docs/studio.ja.md" target="_blank" rel="noopener noreferrer">Studio ガイド ↗</a><a href="https://github.com/M-simplifier/catdb/blob/main/docs/mathematics.ja.md" target="_blank" rel="noopener noreferrer">数学的背景 ↗</a><a href="https://github.com/M-simplifier/catdb/blob/main/STATUS.md" target="_blank" rel="noopener noreferrer">制限と状況 ↗</a></div></div></div><div class="container footer-bottom"><p>独立したMITライセンスの実装です。<a href="https://arxiv.org/abs/1009.1166" target="_blank" rel="noopener noreferrer">Functorial Data Migration</a> と <a href="https://categoricaldata.net/CQL/" target="_blank" rel="noopener noreferrer">CQL</a> は先行する研究・実装です。</p><span>© CATDB · WORKING POC</span></div></footer>
+</body>
+</html>

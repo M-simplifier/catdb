@@ -97,10 +97,10 @@
     "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-21.1.8/llvm/LICENSE.TXT",
     "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-21.1.8/libcxx/LICENSE.TXT",
     "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-21.1.8/libcxxabi/LICENSE.TXT",
-    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE",
-    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-APACHE",
-    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-APACHE-LLVM",
-    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/LICENSE-MIT",
-    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/554a312ff521d2e50974600da385848ac43527ee/libc-top-half/musl/COPYRIGHT"
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE-APACHE",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE-APACHE-LLVM",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/LICENSE-MIT",
+    "https://raw.githubusercontent.com/WebAssembly/wasi-libc/17a80af6bbd06addebaabe4c8bf6f3482082588d/libc-top-half/musl/COPYRIGHT"
   ]
 }

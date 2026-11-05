@@ -5,18 +5,22 @@ import Control.Concurrent (threadDelay)
 import Control.Monad (forever,unless,when,forM_)
 import Control.Monad.State.Strict (get,modify)
 import Data.List (find)
+import qualified Data.Text as T
+import qualified Data.Map.Strict as M
+import qualified Miso.Event.Types as Events
+import DiagramLayout (Point(..),Placed(..),Layout(..),layoutDag,moveNode)
 import Data.Maybe (fromMaybe,listToMaybe,isJust)
 import Miso (App,Component(..),Effect,component,defaultEvents,io,io_,issue,startApp)
 import qualified Miso.Fetch as Fetch
 import qualified Miso.JSON as J
-import Miso.String (ms)
+import Miso.String (ms,fromMisoString)
 import qualified Browser
 import Model
 import Studio.Wire
 import View (viewModel)
 
 main :: IO ()
-main = startApp defaultEvents app
+main = startApp (defaultEvents <> Events.keyboardEvents <> Events.pointerEvents <> M.singleton "pointermove" Events.BUBBLE) app
 #ifdef WASM
 foreign export javascript "hs_start" main :: IO ()
 #endif
@@ -47,7 +51,60 @@ handle = \case
       ,fileInput=if snapshot m==Nothing && isJust (stateCourse state) then fromMaybe (fileInput x) (statePath state) else fileInput x})
     when (snapshot m==Nothing && not (isPending m)) initializeSelection
   NetworkFailed msg -> modify (\m -> m {polling=False,feedback=Just msg})
-  Navigate target -> modify (\m -> m {page=target,picker=Nothing,feedback=Nothing,failure=Nothing})
+  Navigate target -> modify $ \m -> m {page=target,picker=Nothing,feedback=Nothing,failure=Nothing,diagramTool=InspectTool
+    ,mappingDraft=if target==Mappings && blank (mappingFrom (mappingDraft m)) then fromMaybe (mappingDraft m) (snapshotState m >>= listToMaybe . stateMappings) else mappingDraft m}
+  SelectDiagram selected -> modify (\m -> m {diagramSelection=Just selected})
+  SetDiagramTool tool -> modify (\m -> m {diagramTool=tool})
+  StartSchema copy -> modify $ \m -> m {page=SchemaEditor,schemaDraft=if copy then displayedSchema m else WSchema [] [] []
+    ,schemaNameInput=if copy then browsedSchema m<>"-copy" else "",schemaValidated=Nothing
+    ,diagramSelection=Nothing,diagramTool=InspectTool,diagramZoom=1,diagramPan=Point 0 0}
+  BrowseSchema key -> modify (\m -> m {browsedSchema=key,page=Structure,diagramSelection=Just (SelectEquation 0),diagramTool=InspectTool,diagramZoom=1,diagramPan=Point 0 0})
+  DiagramObject target object -> do
+    m<-get
+    case diagramTool m of
+      ConnectTool Nothing -> modify (\x->x {diagramTool=ConnectTool (Just object),arrowFromInput=object,diagramSelection=Just (SelectObject object)})
+      ConnectTool (Just source) -> modify (\x->x {arrowFromInput=source,arrowToInput=object,diagramTool=InspectTool,diagramSelection=Just (SelectObject object)})
+      EquationTool _ -> when (equationStartInput m/=object) (modify (editField EquationStartField object))
+      ObjectMapTool Nothing | not target -> modify (\x->x {diagramTool=ObjectMapTool (Just object),diagramSelection=Just (SelectObject object)})
+      ObjectMapTool (Just source) | target -> issue (ChooseObjectImage source object) >> modify (\x->x {diagramTool=ObjectMapTool Nothing})
+      _ -> modify (\x->x {diagramSelection=Just (SelectObject object)})
+  DiagramArrow target key -> do
+    m<-get
+    case diagramTool m of
+      EquationTool side | page m==SchemaEditor -> issue (AppendEquation side key)
+      _ | page m==MappingEditor && target -> issue (AppendMappingPath key)
+        | page m `elem` [MappingEditor,Mappings,ViewBuilder] && not target -> issue (ChooseMappingArrow key)
+        | otherwise -> modify (\x->x {diagramSelection=Just (SelectArrow key)})
+  CheckSchema -> do
+    m<-get
+    send (CheckingSchema (trim (schemaNameInput m)) (schemaDraft m)) ["tag" J..= ("checkSchema"::S),"name" J..= trim (schemaNameInput m),"schema" J..= schemaDraft m]
+  CheckMapping -> do
+    m<-get
+    send (CheckingMapping (mappingDraft m)) ["tag" J..= ("checkMapping"::S),"mapping" J..= mappingDraft m]
+  UseMapping key -> do
+    m<-get
+    case snapshotState m >>= find ((==key) . mappingKey) . stateMappings of
+      Nothing->pure ()
+      Just f->modify (\x->x {page=ViewBuilder,mappingDraft=f,viewMappingInput=key,selectedMappingArrow=fromMaybe "" (fst <$> listToMaybe (mappingArrows f)),diagramTool=InspectTool,diagramZoom=1,diagramPan=Point 0 0})
+  ZoomDiagram factor -> modify (\m->m {diagramZoom=max 0.35 (min 2.5 (diagramZoom m*factor))})
+  FitDiagram -> modify (\m->m {diagramZoom=1,diagramPan=Point 0 0})
+  RearrangeDiagram -> modify (\m->m {diagramPositions=filter (not . T.isPrefixOf (fromMisoString (diagramScope m)) . fromMisoString . fst) (diagramPositions m),diagramZoom=1,diagramPan=Point 0 0})
+  PanDiagram dx dy -> modify (\m->let Point x y=diagramPan m in m {diagramPan=Point (x+dx) (y+dy)})
+  NudgeNode dx dy -> modify $ \m -> case diagramSelection m of
+    Just (SelectObject key)->
+      let scoped=diagramScope m<>key
+          def=displayedSchema m
+          automatic=lookup key [(o,p)|Placed o p<-layoutNodes (layoutDag (schemaObjects def) [(arrowFrom a,arrowTo a)|a<-schemaArrows def] [])]
+          Point x y=fromMaybe (fromMaybe (Point 70 95) automatic) (lookup scoped (diagramPositions m))
+      in m {diagramPositions=moveNode scoped (Point (x+dx) (y+dy)) (diagramPositions m)}
+    _->m
+  BeginPan x y -> modify (\m->m {diagramGesture=Just (PanGesture (Point x y) (diagramPan m))})
+  BeginMove key point x y -> modify (\m->m {diagramGesture=Just (MoveGesture (diagramScope m<>key) (Point x y) point)})
+  MovePointer x y -> modify $ \m -> case diagramGesture m of
+    Just (PanGesture (Point sx sy) (Point px py))->m {diagramPan=Point (px+(x-sx)/diagramZoom m) (py+(y-sy)/diagramZoom m)}
+    Just (MoveGesture key (Point sx sy) (Point px py))->m {diagramPositions=moveNode key (Point (max 15 (px+(x-sx)/diagramZoom m)) (max 40 (py+(y-sy)/diagramZoom m))) (diagramPositions m)}
+    Nothing->m
+  EndGesture -> modify (\m->m {diagramGesture=Nothing})
   Edit field value -> modify (editField field value)
   ToggleMath -> modify (\m -> m {math=not (math m)})
   ToggleGuideTools -> modify (\m -> m {guideTools=not (guideTools m)})
@@ -137,13 +194,18 @@ handle = \case
       then localFailure "矢印の名前・始点・終点を指定してください。名前はスキーマ内で一意にします。"
       else modify (\x -> x {schemaDraft=def {schemaArrows=schemaArrows def++[WArrow key (arrowFromInput m) (arrowToInput m)]},arrowNameInput=""})
   RemoveArrow key -> modify (\m -> m {schemaDraft=(schemaDraft m) {schemaArrows=filter ((/=key) . arrowId) (schemaArrows (schemaDraft m))}})
-  AppendEquation side arrow -> modify (\m -> if side then m {equationLeftInput=equationLeftInput m++[arrow]} else m {equationRightInput=equationRightInput m++[arrow]})
+  AppendEquation side arrow -> do
+    m<-get
+    let steps=if side then equationLeftInput m else equationRightInput m
+        allowed=maybe [] (outgoing (schemaDraft m)) (pathEndObject (schemaDraft m) (equationStartInput m) steps)
+    if arrow `notElem` map arrowId allowed then localFailure "この射は、選択中の道の終点から合成できません。"
+      else modify (\x -> if side then x {equationLeftInput=steps++[arrow]} else x {equationRightInput=steps++[arrow]})
   ClearEquation side -> modify (\m -> if side then m {equationLeftInput=[]} else m {equationRightInput=[]})
   AddEquation -> do
     m <- get
     let def=schemaDraft m; start=equationStartInput m
         a=WPath start (equationLeftInput m); b=WPath start (equationRightInput m)
-    if blank start || pathEndObject def start (pathSteps a)/=pathEndObject def start (pathSteps b)
+    if blank start || pathEndObject def start (pathSteps a)==Nothing || pathEndObject def start (pathSteps a)/=pathEndObject def start (pathSteps b)
       then localFailure "二つの道は同じオブジェクトから始め、同じオブジェクトで終える必要があります。"
       else modify (\x -> x {schemaDraft=def {schemaEquations=schemaEquations def++[WEquation a b]},equationLeftInput=[],equationRightInput=[]})
   RemoveEquation index -> modify (\m -> m {schemaDraft=(schemaDraft m) {schemaEquations=[eq | (n,eq) <- zip [0..] (schemaEquations (schemaDraft m)),n/=index]}})
@@ -155,8 +217,12 @@ handle = \case
       else f {mappingTo=key,mappingObjects=[],mappingArrows=[]},selectedMappingArrow=""}
   ChooseObjectImage object image -> modify (\m -> m {mappingDraft=(mappingDraft m) {mappingObjects=replace object image (mappingObjects (mappingDraft m))}})
   ChooseMappingArrow key -> modify (\m -> m {selectedMappingArrow=key})
-  AppendMappingPath arrow -> modify $ \m ->
-    let f=mappingDraft m; p=mappingSelectedPath m in m {mappingDraft=f {mappingArrows=replace (selectedMappingArrow m) p {pathSteps=pathSteps p++[arrow]} (mappingArrows f)}}
+  AppendMappingPath arrow -> do
+    m<-get
+    let f=mappingDraft m; p=mappingSelectedPath m
+        allowed=do schema<-mappingOutputSchema m; end<-pathEndObject schema (pathStart p) (pathSteps p); pure (map arrowId (outgoing schema end))
+    if blank (selectedMappingArrow m) || maybe True (arrow `notElem`) allowed then localFailure "先にCの生成射を選び、Dの現在の終点から合成できる射を選んでください。"
+      else modify (\x->x {mappingDraft=f {mappingArrows=replace (selectedMappingArrow m) p {pathSteps=pathSteps p++[arrow]} (mappingArrows f)}})
   ResetMappingPath -> modify $ \m ->
     let f=mappingDraft m; source=fromMaybe "" $ do s <- mappingInputSchema m; a <- arrowDef s (selectedMappingArrow m); lookup (arrowFrom a) (mappingObjects f)
     in m {mappingDraft=f {mappingArrows=replace (selectedMappingArrow m) (WPath source []) (mappingArrows f)}}
@@ -168,7 +234,8 @@ handle = \case
     case snapshotState m >>= find ((==key) . mappingKey) . stateMappings of
       Nothing -> pure ()
       Just f -> modify (\x -> x {page=MappingEditor,mappingDraft=f {mappingKey=mappingKey f<>"-copy"},selectedMappingArrow=fromMaybe "" (fst <$> listToMaybe (mappingArrows f))})
-  ChooseViewMapping key -> modify (\m -> m {viewMappingInput=key})
+  ChooseViewMapping key -> modify $ \m -> let selected=snapshotState m >>= find ((==key) . mappingKey) . stateMappings
+    in m {viewMappingInput=key,mappingDraft=fromMaybe (mappingDraft m) selected,selectedMappingArrow=fromMaybe "" (selected >>= fmap fst . listToMaybe . mappingArrows)}
   RunView -> do
     m <- get
     let system=snapshotState m >>= fmap fst . find ((==viewSourceInput m) . snd) . stateHeads
@@ -209,10 +276,13 @@ handle = \case
       if not (replyOk reply)
         then when (case purpose of Previewing _ _ -> True; _ -> False) (modify (\x -> x {validated=Nothing}))
         else case purpose of
+          CheckingSchema name def -> modify (\x->x {schemaValidated=Just (currentVersion x,name,def)})
+          CheckingMapping def -> modify (\x->x {mappingValidated=Just (currentVersion x,def)})
           Previewing ver dat -> modify (\x -> x {validated=if currentVersion x==ver && workingData x==dat then Just (ver,dat) else Nothing})
           Inspecting _ focus view -> do
             mapM_ (\snap -> modify (acceptSnapshot focus view snap)) (replySnapshot reply)
             when (snapshot m==Nothing && isJust (fieldCourse m)) (modify (\x->x {page=Course}))
+            when (snapshot m==Nothing && not (isJust (fieldCourse m))) (modify (\x->x {page=Structure}))
             explainFocused
           GuideInspecting object key -> do
             forM_ (replySnapshot reply) $ \snap -> do
@@ -238,7 +308,7 @@ handle = \case
           ChangingFile -> do
             modify (\x -> x {snapshot=Nothing,draft=Nothing,validated=Nothing,selectedView=Nothing,focusedRow=Nothing,explanation=Nothing,page=Files})
             initializeSelection
-          SavingMapping -> modify (\x -> x {page=Mappings})
+          SavingMapping -> modify (\x -> x {page=Mappings,mappingValidated=Nothing})
           _ -> do
             case replySnapshot reply of
               Nothing -> pure ()
@@ -251,6 +321,7 @@ handle = \case
                 modify (acceptSnapshot Nothing view snap)
                 explainFocused
             when (purpose==Applying) (modify (\x -> x {reasonInput="",guideExercise=Nothing,page=if isJust (fieldCourse x) then Course else page x}))
+            when (purpose==SavingSchema) (modify (\x->x {page=Structure,schemaValidated=Nothing}))
   CommandFailed number msg -> modify (\m -> if number==sequenceNumber m then m {pending=Nothing,feedback=Just msg} else m)
   CancelWork -> do
     m <- get

@@ -9,7 +9,8 @@ import qualified Miso.Html.Property as P
 import Miso.String (ms,fromMisoString)
 import Model
 import Studio.Wire
-import Course (coursePage,coursePanel,courseRail,courseOrigins)
+import Course (coursePage,courseRail,courseOrigins)
+import qualified Canvas
 
 type V = View Model Action
 empty :: V
@@ -40,11 +41,20 @@ mathNote m value = if math m then divc "mathbox" [txt value] else empty
 
 viewModel :: props -> Model -> V
 viewModel _ m = divc ("app"<>if math m then " math" else "")
-  [topbar m,rail m,H.main_ [P.class_ "main"] [feedbackView m,busyView m,if page m/=Course then coursePanel m else empty,mainView m],H.aside_ [P.class_ "insp",P.aria_ "label" "選んだ行の道と由来"] [courseOrigins m,inspector m],confirmView m]
+  [topbar m,rail m,H.main_ [P.class_ "main"] [feedbackView m,busyView m,mainView m]
+  ,H.aside_ [P.class_ "insp",P.aria_ "label" "選択した図式の詳細"] [details]
+  ,Canvas.canvasFooter m,confirmView m]
+  where details=case page m of
+          Structure->Canvas.schemaInspector m
+          SchemaEditor->Canvas.schemaInspector m
+          MappingEditor->mappingEditor m
+          ViewBuilder->viewBuilder m
+          Mappings->mappingsPage m
+          _->divc "inspector-content" [courseOrigins m,inspector m]
 
 topbar :: Model -> V
 topbar m = H.header_ [P.class_ "top"]
-  [H.button_ [P.class_ "brand",H.onClick (Navigate Files)] [txt "CatDB Studio",H.span_ [P.class_ "version"] [txt "PoC 0.3"]]
+  [H.button_ [P.class_ "brand",H.onClick (Navigate Files)] [txt "✳ CatDB Studio",H.span_ [P.class_ "version"] [txt "PoC 0.4"]]
   ,H.button_ [P.class_ "dbname",H.onClick (Navigate Files),P.title_ (fromMaybe "ファイルを開く" (snapshotState m >>= statePath))]
     [txt (maybe "ファイルを開く" shortPath (snapshotState m >>= statePath))]
   ,divc "mid"
@@ -64,7 +74,9 @@ rail m | isJust (fieldCourse m) && not (guideTools m)=courseRail m
        | otherwise=fullRail m
 fullRail :: Model -> V
 fullRail m = H.nav_ [P.class_ "rail",P.aria_ "label" "データベース"]
-  ([if isJust (fieldCourse m) then button "ri on" "現場サービスの体験へ" (Navigate Course) False else empty
+  ([divc "rh" [txt "WORKSPACE / LOCAL"]
+   ,nav Structure "◇ スキーマを描く",nav Records "◉ データをたどる",nav Mappings "⇄ 対応と移行"
+   ,if isJust (fieldCourse m) then button "ri on" "現場サービスの体験へ" (Navigate Course) False else empty
    ,if isJust (fieldCourse m) then button "ri" "体験用の道具に戻す" ToggleGuideTools False else empty
    ,divc "rh" [txt "編集するデータ"]]
   ++ [button ("ri"<>if snapshotRevisionOf m==rev && selectedView m==Nothing then " on" else "") (name<>"  ·  "<>rev)
@@ -105,14 +117,14 @@ mainView m
   | otherwise = case page m of
     Course -> coursePage m
     Files -> filesPage m
-    SchemaEditor -> schemaEditor m
-    MappingEditor -> mappingEditor m
-    ViewBuilder -> viewBuilder m
-    Mappings -> mappingsPage m
+    SchemaEditor -> Canvas.schemaCanvas m
+    MappingEditor -> Canvas.migrationCanvas m
+    ViewBuilder -> Canvas.migrationCanvas m
+    Mappings -> Canvas.migrationCanvas m
     History -> historyPage m
-    Structure -> structurePage m
+    Structure -> Canvas.schemaCanvas m
     Rules -> rulesPage m
-    Records -> recordsPage m
+    Records -> divc "lens-workspace" [Canvas.instanceCanvas m,viewBanner m,H.details_ [P.class_ "records-drawer"] [H.summary_ [] [txt "表・検索・行の追加を開く"],recordsPage m]]
 
 filesPage :: Model -> V
 filesPage m = divc "page-stack"
@@ -183,38 +195,6 @@ viewBanner m = case selectedView m >>= \key -> snapshotState m >>= find ((==key)
       then button "btn small" "三段を再計算" (Guard (FieldStage "all")) (isPending m)
       else button "btn small" "再計算する" (Guard (RecomputeView (viewKey view))) (isPending m)]
 
-structurePage :: Model -> V
-structurePage m = divc "page-stack"
-  [heading "レコードの形" "スキーマ" "オブジェクトは行の集まり、矢印は各行から必ず一つの行を選ぶ関係です。二つの道の約束は、その始点にあるすべての行に適用されます。"
-  ,divc "schema-list" [schemaCard key def | (key,def) <- maybe [] stateSchemas (snapshotState m)]
-  ,btn "新しいスキーマを作る" (Navigate SchemaEditor)
-  ,mathNote m "スキーマは有限・非巡回な圏の表示です。宣言したパス等式で等しい道は、同じ射です。既存のスキーマは書き換えず、新しい名前のスキーマと対応を追加します。"]
-schemaCard :: S -> WSchema -> V
-schemaCard key def = divc "stepc"
-  [H.h2_ [] [txt key],divc "object-chips" [H.code_ [] [txt o] | o <- schemaObjects def]
-  ,H.ul_ [] [H.li_ [] [H.code_ [] [txt (arrowId a)],txt (" : "<>arrowFrom a<>" → "<>arrowTo a)] | a <- schemaArrows def]
-  ,H.ul_ [] [H.li_ [] [H.code_ [] [txt (pathStart (equationLeft eq)<>" : "<>pathLabel (equationLeft eq)<>" = "<>pathLabel (equationRight eq))]] | eq <- schemaEquations def]]
-
-schemaEditor :: Model -> V
-schemaEditor m = divc "page-stack"
-  [heading "空の形から作る" "スキーマを作る" "オブジェクトと矢印を置き、必要なら二つの道を等しいと宣言します。確認が通ると、空のレコードと編集用の系を一緒に保存します。"
-  ,field "スキーマと編集用の系の名前" (input "例：my-project" (schemaNameInput m) (Edit SchemaNameField))
-  ,divc "stepc" [H.h2_ [] [txt "1 オブジェクト"],divc "object-chips" [divc "chip" [txt o,button "small-link" "×" (RemoveObject o) False] | o <- schemaObjects def]
-    ,divc "form-actions" [input "オブジェクト名" (newObjectInput m) (Edit NewObjectField),btn "追加" AddObject]]
-  ,divc "stepc" [H.h2_ [] [txt "2 矢印"],H.ul_ [] [H.li_ [] [txt (arrowId a<>" : "<>arrowFrom a<>" → "<>arrowTo a),button "small-link" "削除" (RemoveArrow (arrowId a)) False] | a <- schemaArrows def]
-    ,divc "field-grid" [field "矢印の名前" (input "例：belongsTo" (arrowNameInput m) (Edit ArrowNameField))
-      ,field "始点" (select "始点" (arrowFromInput m) (Edit ArrowFromField) choices),field "終点" (select "終点" (arrowToInput m) (Edit ArrowToField) choices)]
-    ,btn "矢印を追加" AddArrow,hint "同じオブジェクトへ戻る循環は作れません。矢印は、すべての行に行き先を要求します。"]
-  ,divc "stepc" [H.h2_ [] [txt "3 二つの道の約束（任意）"],H.ul_ []
-      [H.li_ [] [txt (pathLabel (equationLeft eq)<>" = "<>pathLabel (equationRight eq)),button "small-link" "削除" (RemoveEquation n) False] | (n,eq) <- zip [0..] (schemaEquations def)]
-    ,field "共通の始点" (select "約束の始点" (equationStartInput m) (Edit EquationStartField) choices)
-    ,pathBuilder "一つ目の道" def (WPath (equationStartInput m) (equationLeftInput m)) (AppendEquation True) (ClearEquation True)
-    ,pathBuilder "二つ目の道" def (WPath (equationStartInput m) (equationRightInput m)) (AppendEquation False) (ClearEquation False)
-    ,btn "この二つの道を等しいと宣言" AddEquation]
-  ,button "btn primary" "確認してスキーマを保存" (Guard SaveSchema) (isPending m || blank (schemaNameInput m))
-  ,hint "削除したオブジェクトや矢印を使う定義は自動修正しません。残った参照を直してから保存してください。"]
-  where def=schemaDraft m; choices=[(o,o) | o <- schemaObjects def]
-
 pathBuilder :: S -> WSchema -> WPath -> (S -> Action) -> Action -> V
 pathBuilder label schema path append reset = divc "path-builder"
   [H.h3_ [] [txt label],divc "path" [H.span_ [P.class_ "pnode"] [txt (pathStart path)],H.code_ [] [txt (pathLabel path)],H.span_ [P.class_ "pnode"] [txt (fromMaybe "?" end)]]
@@ -246,7 +226,7 @@ mappingsPage m = divc "page-stack"
     [H.h2_ [] [txt (mappingKey f<>" : "<>mappingFrom f<>" → "<>mappingTo f)]
     ,H.ul_ [] [H.li_ [] [txt (a<>" ↦ "<>b)] | (a,b) <- mappingObjects f]
     ,H.ul_ [] [H.li_ [] [txt (a<>" ↦ "<>pathLabel path)] | (a,path) <- mappingArrows f]
-    ,btn "この対応をもとに新しく作る" (LoadMapping (mappingKey f))] | f <- maybe [] stateMappings (snapshotState m)]
+    ,divc "form-actions" [btn "図で見て計算する" (UseMapping (mappingKey f)),btn "別名で新しく作る" (LoadMapping (mappingKey f))]] | f <- maybe [] stateMappings (snapshotState m)]
   ,mathNote m "F : C → D は、パス等式を保つ関手です。D の等式で同じ射になる道は、表記が違っても同じ像です。同じオブジェクト像と同じ射の像を持つ対応は、同じ関手を表します。保存した入力表記は確認できます。"]
 
 mappingEditor :: Model -> V
@@ -264,7 +244,9 @@ mappingEditor m = divc "page-stack"
       ,pathBuilder "選んだ矢印の道" target (mappingSelectedPath m) AppendMappingPath ResetMappingPath
       ,button "btn small" "この始点の恒等の道にする" ResetMappingPath (blank (expected True))
       ,hint "空の道（恒等の道）も、上のボタンで明示的に指定してください。オブジェクトの像を変えても、道は自動修正しません。"]]
-  ,button "btn primary" "対応を確認して保存" SaveMapping (isPending m || blank (mappingKey f))
+  ,button "btn" "関手性を検査" CheckMapping (isPending m || blank (mappingKey f))
+  ,hint (if mappingChecked m then "Validated · 検証済み・未確定。まだ保存していません。" else "Draft · 未検証。エンジンで経路等式の保存を検査します。")
+  ,button "btn primary" "新しい対応を保存" SaveMapping (isPending m || not (mappingChecked m))
   ,mathNote m "Δ は F:出力→入力、Σ と Π は F:入力→出力 を使います。保存時には射の始点・終点と、始点スキーマのすべてのパス等式を確認します。"]
   where
     f=mappingDraft m; source=fromMaybe (WSchema [] [] []) (mappingInputSchema m); target=fromMaybe (WSchema [] [] []) (mappingOutputSchema m)

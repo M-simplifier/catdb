@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name: catdb
-version: 0.3.0.0
+version: 0.4.0.0
 synopsis: A small persistent database of finite functors
 build-type: Simple
 license: MIT
@@ -17,9 +17,10 @@ description: A proof of concept embedded database with exact finite categorical
 extra-source-files: README.md, CONTRIBUTING.md, STATUS.md, docs/*.md,
   reference/web/*.html, reference/web/*.css, reference/web/*.js,
   samples/*.csv, examples/*.json, test/*.py, test/*.ps1,
-  build.ps1, site/*.html, site/*.css, site/*.js, site/*.svg, site/assets/*.jpg,
+  build.ps1, site/*.html, site/*.css, site/*.js, site/*.svg, site/assets/*.jpg, site/assets/*.png, site/ja/*.html,
   build-frontend.ps1, package-studio.ps1, "Start CatDB Studio.cmd", "Start Relay Desk.cmd", THIRD_PARTY_NOTICES.md,
   "Start Field Service.cmd", "Start Completed Example.cmd",
+  "Start Reading Notes.cmd", "Start Mapping Example.cmd",
   studio/frontend/*.cabal, studio/frontend/cabal.project, studio/frontend/flake.nix,
   studio/frontend/flake.lock, studio/frontend/build.sh, studio/frontend/app/*.hs,
   studio/frontend/static/*.html, studio/frontend/static/*.css, studio/frontend/static/*.js,
@@ -93,8 +94,8 @@ executable catdb-studio
 test-suite laws
   import: settings
   type: exitcode-stdio-1.0
-  hs-source-dirs: test, app, reference/src
+  hs-source-dirs: test, app, reference/src, studio/frontend/app
   main-is: Main.hs
-  other-modules: Demo, Relay.Model, NativeMemory
+  other-modules: Demo, Relay.Model, NativeMemory, DiagramTests, DiagramLayout
   build-depends: catdb, directory, filepath, process, QuickCheck >=2.14
   ghc-options: -threaded -rtsopts

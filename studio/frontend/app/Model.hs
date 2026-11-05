@@ -5,6 +5,7 @@ import Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.Text as T
 import Miso.String (MisoString, fromMisoString, ms)
 import Studio.Wire
+import DiagramLayout (Point(..),pathNodes)
 
 type S = MisoString
 data Page = Course | Records | Rules | Structure | SchemaEditor | Mappings | MappingEditor | ViewBuilder | Files | History deriving (Eq, Show)
@@ -13,8 +14,12 @@ data Field = FilePathField | PresetField | BackupField | ReasonField | SearchFie
   | MappingNameField | ViewNameField | OperationField | ViewSourceField | AdoptNameField
   deriving (Eq,Show)
 data Purpose = Inspecting S (Maybe WRef) (Maybe S) | GuideInspecting S (Maybe S) | GuideDrafting S | FieldComputing S
-  | Previewing S WData | Applying | SavingSchema | SavingMapping | ComputingView | ChangingFile | Other
+  | Previewing S WData | CheckingSchema S WSchema | CheckingMapping WMapping
+  | Applying | SavingSchema | SavingMapping | ComputingView | ChangingFile | Other
   deriving (Eq, Show)
+data DiagramSelection = SelectObject S | SelectArrow S | SelectEquation Int deriving (Eq,Show)
+data DiagramTool = InspectTool | ConnectTool (Maybe S) | EquationTool Bool | ObjectMapTool (Maybe S) deriving (Eq,Show)
+data Gesture = PanGesture Point Point | MoveGesture S Point Point deriving (Eq,Show)
 data Action
   = Initialize | Initialized S | Poll | GotState WState | NetworkFailed S
   | Navigate Page | Edit Field S | ToggleMath | Dismiss | Noop
@@ -31,6 +36,10 @@ data Action
   | CreateDatabase | OpenDatabase | CloseDatabase | AdoptLegacy | BackupDatabase | Download S | Downloaded S
   | Completed Int Purpose WReply | CommandFailed Int S | CancelWork | CancelledReply WReply
   | ToggleGuideTools | GuideOpenSource S (Maybe S) | GuideMakeDraft S | GuideRepair | FieldStage S
+  | SelectDiagram DiagramSelection | SetDiagramTool DiagramTool | DiagramObject Bool S | DiagramArrow Bool S
+  | StartSchema Bool | BrowseSchema S | CheckSchema | CheckMapping | UseMapping S
+  | ZoomDiagram Double | FitDiagram | RearrangeDiagram | PanDiagram Double Double | NudgeNode Double Double
+  | BeginPan Double Double | BeginMove S Point Double Double | MovePointer Double Double | EndGesture
   deriving (Eq, Show)
 
 data Model = Model
@@ -46,6 +55,9 @@ data Model = Model
   , equationLeftInput :: [S], equationRightInput :: [S], mappingDraft :: WMapping, selectedMappingArrow :: S
   , viewNameInput :: S, operationInput :: S, viewSourceInput :: S, viewMappingInput :: S, adoptNameInput :: S
   , guideTools :: Bool, guideExercise :: Maybe S
+  , diagramSelection :: Maybe DiagramSelection, diagramTool :: DiagramTool, browsedSchema :: S
+  , diagramPositions :: [(S,Point)], diagramZoom :: Double, diagramPan :: Point, diagramGesture :: Maybe Gesture
+  , schemaValidated :: Maybe (S,S,WSchema), mappingValidated :: Maybe (S,WMapping)
   } deriving (Eq,Show)
 
 initialModel :: Model
@@ -58,6 +70,9 @@ initialModel = Model
   , equationStartInput="",equationLeftInput=[],equationRightInput=[],mappingDraft=WMapping "" "" "" [] [],selectedMappingArrow=""
   , viewNameInput="",operationInput="delta",viewSourceInput="",viewMappingInput="",adoptNameInput=""
   , guideTools=False,guideExercise=Nothing
+  , diagramSelection=Just (SelectEquation 0),diagramTool=InspectTool,browsedSchema=""
+  , diagramPositions=[],diagramZoom=1,diagramPan=Point 0 0,diagramGesture=Nothing
+  , schemaValidated=Nothing,mappingValidated=Nothing
   }
 
 trim :: S -> S
@@ -96,10 +111,8 @@ fieldTarget dat object key arrow = record dat object key >>= lookup arrow . reco
 arrowDef :: WSchema -> S -> Maybe WArrow
 arrowDef schema key = find ((==key) . arrowId) (schemaArrows schema)
 pathEndObject :: WSchema -> S -> [S] -> Maybe S
-pathEndObject _ object [] = Just object
-pathEndObject schema object (a:as) = do
-  arrow <- arrowDef schema a
-  if arrowFrom arrow /= object then Nothing else pathEndObject schema (arrowTo arrow) as
+pathEndObject schema object steps = either (const Nothing) (listToMaybe . reverse)
+  (pathNodes [(arrowId a,arrowFrom a,arrowTo a)|a<-schemaArrows schema] object steps)
 
 -- The client proposes and draws. Only the native engine admits a new revision.
 type Node = (S,S)
@@ -144,6 +157,8 @@ acceptSnapshot focus view snap m = m
   { snapshot=Just snap,draft=Nothing,validated=Nothing,committedVisible=False,selectedView=view,page=Records
   , focusedObject=object,focusedRow=key,focusPath=[],picker=Nothing,explanation=Nothing,search="",insertTargets=[]
   , viewSourceInput=snapshotRevision snap,viewMappingInput=""
+  , browsedSchema=snapshotSchemaKey snap,diagramSelection=Just (SelectEquation 0),diagramTool=InspectTool
+  , diagramZoom=1,diagramPan=Point 0 0
   }
   where
     object=maybe (fromMaybe "" (listToMaybe (schemaObjects (snapshotSchema snap)))) refObject focus
@@ -200,3 +215,16 @@ fieldStageName m=case snapshotSchemaKey <$> snapshot m of
   Just "fs:raw"->"原本"; Just "fs:normalized"->"Σ 顧客をそろえる"; Just "fs:operations"->"Δ 派遣の形で読む"; Just "fs:candidates"->"Π 担当できる組"; _->""
 fieldView :: S -> Model -> Maybe WView
 fieldView name m=snapshotState m >>= find ((==name) . viewKey) . stateViews
+
+displayedSchema :: Model -> WSchema
+displayedSchema m | page m==SchemaEditor=schemaDraft m
+                  | otherwise=fromMaybe (currentSchema m) (schemaByKey m (browsedSchema m))
+schemaChecked :: Model -> Bool
+schemaChecked m=schemaValidated m==Just (currentVersion m,trim (schemaNameInput m),schemaDraft m)
+mappingChecked :: Model -> Bool
+mappingChecked m=mappingValidated m==Just (currentVersion m,mappingDraft m)
+diagramScope :: Model -> S
+diagramScope m | page m==Records="lens:"<>maybe "" snapshotRevision (snapshot m)
+               | page m `elem` [MappingEditor,ViewBuilder]="mapping:"
+               | page m==SchemaEditor="draft:"
+               | otherwise="schema:"<>browsedSchema m<>":"

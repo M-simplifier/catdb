@@ -12,6 +12,8 @@
 !/build-frontend.ps1
 !/package-studio.ps1
 !/Start CatDB Studio.cmd
+!/Start Reading Notes.cmd
+!/Start Mapping Example.cmd
 !/Start Field Service.cmd
 !/Start Completed Example.cmd
 !/THIRD_PARTY_NOTICES.md
@@ -70,6 +72,7 @@
 !/site/ja/*.html
 !/site/assets/
 !/site/assets/*.jpg
+!/site/assets/*.png
 !/.github/
 !/.github/workflows/
 !/.github/workflows/*.yml
