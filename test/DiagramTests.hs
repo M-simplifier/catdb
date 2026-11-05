@@ -27,4 +27,11 @@ diagramTests=do
   let a=Point 70 230;b=Point 640 230
   assert "parallel edges have separate routes and labels" (routeEdge a b 0 2/=routeEdge a b 1 2 && routeLabel (routeEdge a b 0 2)/=routeLabel (routeEdge a b 1 2))
   assert "cycle drafts still draw without divergence" (length (layoutNodes (layoutDag [1,2::Int] [(1,2),(2,1)] []))==2)
+  let cards=layoutVertical ["Card","Book"::String] [("Card","Book")] []
+      reading=layoutVertical ["Note","Quote","Book"::String] [("Note","Quote"),("Quote","Book"),("Note","Book")] []
+  assert "two reading schemas fit the compact migration width" (layoutWidth cards+85+layoutWidth reading<=850)
+  let verticalPositions=[(n,p)|Placed n p<-layoutNodes reading]
+  case (lookup "Note" verticalPositions,lookup "Quote" verticalPositions,lookup "Book" verticalPositions) of
+    (Just n,Just q,Just b)->assert "compact migration layers advance downward" (pointY n<pointY q && pointY q<pointY b)
+    _->fail "missing compact node"
   putStrLn "PASS: diagram paths, identity/invalid paths, empty/dense DAG, parallel/long routes and retained positions"

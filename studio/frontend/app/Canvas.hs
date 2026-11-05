@@ -43,7 +43,7 @@ toolbar m controls=divc "canvas-toolbar"
   where tab label target pages=button ("mode-tab"<>if page m `elem` pages then " selected" else "") label (Navigate target) False
 
 frame :: Model -> S -> S -> [V] -> Double -> Double -> [V] -> V -> V
-frame m label meta controls width height content annotation=divc "canvas-workspace"
+frame m label meta controls width height content annotation=divc ("canvas-workspace"<>if page m `elem` [Mappings,MappingEditor,ViewBuilder] then " migration-workspace" else "")
   [divc "page-head" [divc "eyebrow" [txt label],H.h1_ [] [txt title],H.p_ [] [txt description]]
   ,divc "canvas-panel" [toolbar m controls,divc "diagram-viewport"
     [divc "viewport-label" [txt ("✳  "<>label),H.span_ [] [txt meta]]
@@ -97,13 +97,16 @@ node m key point@(Point x y) title subtitle secondary tone action=G.g_
       where cost=if c>='\x2e80' then 2 else 1
 
 drawEdges :: [(S,Point)] -> [Edge] -> [V]
-drawEdges positions edges=mapMaybe draw (zip [0::Int ..] edges)
+drawEdges=drawEdgesWith routeEdge
+
+drawEdgesWith :: (Point -> Point -> Int -> Int -> Route) -> [(S,Point)] -> [Edge] -> [V]
+drawEdgesWith routeFor positions edges=mapMaybe draw (zip [0::Int ..] edges)
   where
     draw (index,(key,source,target,tone,action))=do
       a<-lookup source positions; b<-lookup target positions
       let siblings=[i | (i,(_,s,t,_,_))<-zip [0::Int ..] edges,s==source,t==target]
           lane=fromMaybe 0 (elemIndex index siblings)
-          route=routeEdge a b lane (length siblings)
+          route=routeFor a b lane (length siblings)
           Point lx ly=routeLabel route
           pillWidth=max 62 (min 220 (fromIntegral (T.length (fromMisoString key))*8+28))
           coords (Point x y)=num x<>" "<>num y
@@ -233,27 +236,27 @@ migrationCanvas m=frame m ("MIGRATION / F : "<>mappingFrom f<>" → "<>mappingTo
     f=mappingDraft m
     source=fromMaybe (WSchema [] [] []) (mappingInputSchema m)
     target=fromMaybe (WSchema [] [] []) (mappingOutputSchema m)
-    left=layoutDag (schemaObjects source) [(arrowFrom a,arrowTo a)|a<-schemaArrows source] []
-    right=layoutDag (schemaObjects target) [(arrowFrom a,arrowTo a)|a<-schemaArrows target] []
-    shift=layoutWidth left+120; width=shift+layoutWidth right; height=max (layoutHeight left) (layoutHeight right)+30
+    left=layoutVertical (schemaObjects source) [(arrowFrom a,arrowTo a)|a<-schemaArrows source] []
+    right=layoutVertical (schemaObjects target) [(arrowFrom a,arrowTo a)|a<-schemaArrows target] []
+    shift=layoutWidth left+85; width=shift+layoutWidth right; height=max (layoutHeight left) (layoutHeight right)
     prefix side key=side<>key
     automatic=[(prefix "C:" o,p)|Placed o p<-layoutNodes left]++[(prefix "D:" o,Point (pointX p+shift) (pointY p))|Placed o p<-layoutNodes right]
     positions=[(key,fromMaybe p (lookup key (pinned m)))|(key,p)<-automatic]
     pathObjects=either (const []) id (pathNodes [(arrowId a,arrowFrom a,arrowTo a)|a<-schemaArrows target] (pathStart (mappingSelectedPath m)) (pathSteps (mappingSelectedPath m)))
-    edges side schema=[(arrowId a,prefix side (arrowFrom a),prefix side (arrowTo a),if side=="D:" && arrowId a `elem` pathSteps (mappingSelectedPath m) then "violet" else "base",DiagramArrow (side=="D:") (arrowId a))|a<-schemaArrows schema]
+    edges side schema=[(arrowId a,prefix side (arrowFrom a),prefix side (arrowTo a),if side=="D:" && arrowId a `elem` pathSteps (mappingSelectedPath m) || side=="C:" && arrowId a==selectedMappingArrow m then "violet" else "base",DiagramArrow (side=="D:") (arrowId a))|a<-schemaArrows schema]
     content=[G.text_ [P.class_ "schema-boundary-title",A.x_ "70",A.y_ "55"] [txt ("C / "<>mappingFrom f)]
       ,G.text_ [P.class_ "schema-boundary-title",A.x_ (num (shift+70)),A.y_ "55"] [txt ("D / "<>mappingTo f)]]
       ++[mappingLine o image| (o,image)<-mappingObjects f]
-      ++drawEdges positions (edges "C:" source++edges "D:" target)
+      ++drawEdgesWith routeVerticalEdge positions (edges "C:" source++edges "D:" target)
       ++[node m key p o (if "C:" `T.isPrefixOf` fromMisoString key then "C / OBJECT" else "D / OBJECT") "SCHEMA OBJECT" (if "D:" `T.isPrefixOf` fromMisoString key && o `elem` pathObjects then "mapped" else "") (DiagramObject ("D:" `T.isPrefixOf` fromMisoString key) o)
         |(key,p)<-positions,let o=ms (T.drop 2 (fromMisoString key))]
     mappingLine o image=case (lookup (prefix "C:" o) positions,lookup (prefix "D:" image) positions) of
-      (Just (Point x y),Just (Point tx ty))->G.path_ [P.class_ "mapping-line",A.d_ ("M"<>num (x+100)<>" "<>num (y+110)<>" Q"<>num (shift-20)<>" "<>num (height-5)<>" "<>num (tx+100)<>" "<>num (ty+110)),A.markerEnd_ "url(#arr-violet)"]
+      (Just (Point x y),Just (Point tx ty))->G.path_ [P.class_ "mapping-line",A.d_ ("M"<>num (x+198)<>" "<>num (y+55)<>" C"<>num (shift-30)<>" "<>num (y+55)<>" "<>num (shift-30)<>" "<>num (ty+55)<>" "<>num tx<>" "<>num (ty+55)),A.markerEnd_ "url(#arr-violet)"]
       _->H.span_ [] []
     controls=if page m==MappingEditor then [button "btn small" "対象を対応させる" (SetDiagramTool (ObjectMapTool Nothing)) False] else []
     strip=divc "floating-bottom migration-strip" [divc "equation-header" [txt (if operationInput m=="delta" then "Δ_F : D-INSTANCE → C-INSTANCE" else if operationInput m=="sigma" then "Σ_F : C-INSTANCE → D-INSTANCE" else "Π_F : C-INSTANCE → D-INSTANCE")]
       ,small (if blank (selectedMappingArrow m) then "C の射を選び、D の矢印を順に選ぶと、生成射を道へ写せます。" else selectedMappingArrow m<>" ↦ "<>pathLabel (mappingSelectedPath m))
-      ,small ("入力する確定版："<>if blank (viewSourceInput m) then "未選択" else viewSourceInput m)]
+      ,if page m==ViewBuilder then small ("入力する確定版："<>if blank (viewSourceInput m) then "未選択" else viewSourceInput m) else H.span_ [] []]
 
 canvasFooter :: Model -> V
 canvasFooter m=divc "bottom-status" [H.span_ [] [txt (if isPending m then "● COMPUTING" else if page m==SchemaEditor then if schemaChecked m then "● VALIDATED · 検証済み・未確定" else "● DRAFT · 未検証" else if page m==MappingEditor then if mappingChecked m then "● VALIDATED · 検証済み・未確定" else "● DRAFT · 未検証" else if dirty m then if verified m then "● VALIDATED · 未保存" else "● DRAFT · 未保存" else "● COMMITTED")]

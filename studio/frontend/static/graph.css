@@ -20,3 +20,4 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans)}
 .lens-workspace .graph-node .node-title{font-size:19px}
 
 .path-code.green-text{border-left:3px solid #398b70}.path-code.amber-text{border-left:3px solid #d6a14c}
+.migration-workspace .diagram-viewport,.migration-workspace .graph-svg{min-height:530px}.migration-workspace .graph-edge text{font-size:15px}.migration-workspace .graph-node .node-count{font-size:13px}.migration-workspace .floating-bottom{width:calc(100% - 44px);max-width:560px}.migration-workspace .schema-boundary-title{font-size:14px}@media(max-width:720px){.migration-workspace .graph-svg{width:785px}.migration-workspace .floating-bottom{width:calc(100% - 24px)}}
